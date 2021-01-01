@@ -6,6 +6,8 @@ My personal notes on the [[https://github.com/fulcrologic/fulcro][Fulcro]] and [
 
 Notes are in org-mode format (but should be readable in any editor).
 
+Links under section headings jump to the position where Tony is discussing the section topic.
+
 ** Completed Notes
 
 *** Fulcro RAD
