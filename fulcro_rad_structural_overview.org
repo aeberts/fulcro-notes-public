@@ -1,0 +1,264 @@
+#+title: Fulcro RAD Structural Overview
+
+* Fulcro RAD Structural Overview
+
+Personal notes on Tony Kay's video "Fulcro RAD Structural Overview"
+https://www.youtube.com/watch?v=H2XY5kdcjGU
+
+Files that go with this video: https://github.com/fulcrologic/fulcro-rad-tutorial
+
+** Running the Project REPL Setup
+https://youtu.be/H2XY5kdcjGU?t=173
+
+- Project setup and import into Intellij
+- Starting shadow-cljs watch for :main build
+- Timezone aware features provided by joda-time
+- Shadow-cljs build errors on localhost:9630
+- Guardrails high-level overview
+- Set the "dev" alias in Cursive deps in Intellij
+- Add local Clojure Repl
+- Add remote CLJS Repl on port 9000 (your port may be different!)
+
+** Advanced Config of REPLs
+https://youtu.be/H2XY5kdcjGU?t=417
+
+- Why Tony sets the -Ddev alias for the local Clojure repl:
+  - So that the "refresh Fulcro" command doesn't run in test repls.
+- Put the webserver on port 3000
+
+** Fulcro RAD Backend Walkthrough
+https://youtu.be/H2XY5kdcjGU?t=504
+
+- The Backend has several pieces
+- Most are covered in the Fulcro RAD book https://book.fulcrologic.com/RAD.html
+- Using Mount and an immutant server running Ring middleware
+- Fulcro is an HTML5 app so url contains state of the compoents of the page
+- c.e.components.ring-middleware.clj wrap-html-routes is the basic webserver router
+  + if it doesn't go do /api /images /files or /js then go to index.html
+- Using csrf to generate index.html c.e.c.ring-middleware/index
+- High-level discussion of transit middlware
+- High-level discussion of file upload middlware
+- Standard Fulcro requests are handled by c.e.c.ring-middleware/wrap-api
+
+** Config
+https://youtu.be/H2XY5kdcjGU?t=777
+
+- Config is handled by Fulcro's config namespace
+- load-config looks for a default.edn file
+- Configs in prod.edn and dev.edn will be merged with default.edn
+- This allows different things for different environments
+
+** Pathom Parser
+https://youtu.be/H2XY5kdcjGU?t=910
+
+- The real workhorse of RAD is the Pathom parser
+- RAD comes with a pathom parser wrapper (c.f.rad.pathom/new-parser) which:
+  + Add additional plug-ins
+  + Eliding "not found"
+  + Getting reader errors
+  + Trace plugins
+  + etc...
+- Discussion of Locale and Timezone support
+- File upload
+- Datomic support
+- Form plugin for doing saves and deletes on data
+- Attributes plugin makes the pathom parser aware of the Fulcro RAD attributes
+- "all-attributes": concatination of all the attributes in the system
+
+** Resolvers
+https://youtu.be/H2XY5kdcjGU?t=1239
+
+- High-level overview of what each resolver does
+
+** Form Middleware
+https://youtu.be/H2XY5kdcjGU?t=1332
+
+- Save middleware : Run when RAD sees that a form is saved
+- High-level overview of Datomic save code (c.f.r.d.datomic)
+- Explanation of c.f.r.m.save-middleware/rewrite-value
+  + Allows Fulcro to watch values and rewrite them on save (e.g. Int -> BigInt)
+- Delete middleware
+  + Typically you just have your database delete wrapper
+  + Also where you could mix in security concerns
+  + When you receive the parsing env which contains the request you could check
+    the incoming request against the session to see if current user has
+    permissions to do the things.
+  + Same thing with the save middleware
+  + Attributes could cross several databases (datomic, sql, etc.) which makes
+    "multistore" possible.
+
+** Automatic Resolvers
+https://youtu.be/H2XY5kdcjGU?t=1565
+
+- You can hand-write all the resolvers (not req. to use the auto-generated resolvers)
+- automatic-resolvers: it is a devstate that calls the base resolver namespace
+  which explicitly looks at attributes which explicitally declare resolvers.
+  + E.g. c.e.model.item/all-items
+- You can define resolvers on a fulcro attribute using ao/pc-output
+  ao/pc-resolve etc.
+- res/generate-resolvers go through all-attributes and finds the ones that
+  explicitly declare a resolver and pulls them out as automatic resolvers.
+- datomic/generate-resolvers looks at all-attributes that have the :production
+  keyword and creates automatic resolvers.
+- If you have multiple databases for multiple schemas you can generate resolvers
+  for each one (sql, firebase, etc.)
+- Explanation of how Fulcro generates auto-resolvers for Datomic.
+
+** Form Resolvers
+https://youtu.be/H2XY5kdcjGU?t=1914
+
+- Form resolvers just adds pre-defined mutations save-form and delete-entity
+- c.f.rad.form handles saving deleting and all ui except for UI generation
+  + Form controls, how rendering is structured, form nesting, generating
+    instances of forms, default values, routing, etc.
+- Server side of c.f.rad.form is the middleware that you add in.
+- So that's what is in the pathom parser.
+- Most of the core concepts for RAD backend are pathom-related.
+
+** Recap
+https://youtu.be/H2XY5kdcjGU?t=2069
+
+- Most of the work in Fulcro RAD is done by the parser
+- Most of the parser's work is done by resolvers
+- Many of the resolvers can be generated for you
+- Not going to cover the blob stores
+- c.e.c.database-queries namespace is just a series of datomic queries
+- get-all-categories example
+- The env in a query is used so you can pull the right databases out
+- Tony on why you need to deref the db when doing datomic queries: "The db is an
+  atom which is important because if you do a mutation that does follow-on reads
+  (aka a mutation-join) - usually you're querying for the think you've just
+  mutated - you want to query out of that updated database. So mutations
+  automatically update an atom in the env that holds the database so you get the
+  most recent database since the last transaction."
+- The database-queries is the majority of the hand-written code for the server.
+- The rest is gluing together existing RAD pieces or Fulcro pieces
+- Review of server pieces in c.e.components
+  + blob-store: setting up temp blob store in filesystem temp dir for dev and testing
+  + config: server config
+  + database-queries: hand written database queries
+  + datomic: starting the database
+  + delete-middleware: what it says on the tin (one line)
+  + parser: is the real workhorse - give me what resolvers and plug-ins you want
+  + ring-middleware: stock stuff
+  + save-middleware (form middleware) incoming save, rewrite diff, assoc images.
+  + middleware runs from "bottom up"
+  + server: just an immutuant "web/run" on the middleware
+
+** Logging
+https://youtu.be/H2XY5kdcjGU?t=2270
+
+- Helpers to make logging a little easier to read
+
+** Attributes
+https://youtu.be/H2XY5kdcjGU?t=2317
+
+- Attributes basic setup
+- Create a model.cljc file at the same level as client.cljc and ui.cljc
+- Create def for all-attributes that includes the all-attributes from each model
+- In each model namespace create a (def attributes ...) that includes the
+  attribute for that model
+- Requirement of RAD: you have to hand it all the attributes of your data model
+  so that can understand how to do anything.
+- If data is not showing up in your model it's because it's not listed in an
+  attribute and not because you accidentally cleaned up a require.
+- All hand-written resolvers go in a vector
+- (attr/make-attribute-validator all-attributes) can make a generic validator
+  based on attribute settings for use in the UI.
+
+** The Model
+https://youtu.be/H2XY5kdcjGU?t=2409
+
+- namespaces that end in "-options" (except picker-options) form-options,
+  report-options and attribute-options, define keys for you.
+- You can use the ::attr/blah namespace if you wish but your IDE can probably
+  not check to see if it's a valid value.
+- This also gives you completion and a doc string if you hit F1 in Intellij
+- It's recommended that you read all options in the namespaces:
+  c.f.r.attribute-options, c.f.r.report-options, and c.f.r.form-options.
+- RAD is based on the idea that entities will have an id that has a unique name
+  that goes with that entity.
+- You can use native IDs but Tony doesn't personally do that. E.g.
+  ::datomic/native? true. That tells the datomic driver to map the :modelname/id
+  to the datomic db/id. Tony recommends giving yourself a :uuid when exploring
+  how Fulcro works.
+- {ao/identity true} marks attributes that "identifies entities" - any entity in
+  the database has to have at least one identifying attribute.
+- {ao/schema :production} identifyies what schema it goes with.
+- Auto generation of schema is in the server statup which auto-generates the
+  schema using the plugin.
+- If you were going to write a resolver by hand, you wouldn't even need
+  {ao/schema :production}.
+- To define your attributes, you give them a symbolic name, a keyword that
+  becomes it's an RDF-style namespaced name in the data model, a data-type
+  (depends on what your database supports).
+- Attributes also include things like style, which is a hint to the rendering
+  and validation layers. E.g. data type may be ":string" but the :style says
+  it's a :ssn (social security number). Look at the docs to find out what you
+  can set as ao/style.
+- {ao/required?} Hint to the plugin laywers if this attribute is required.
+- {ao/identities #{:account/id}} is the "join point". Identities names all of
+  the ":identity true" attributes in data mode on which the entity symbol can
+  live. Ex: Let's say you have something that you put on multiple different
+  entites like an account reference number (:account/reference-number). Those
+  reference numbers might go on orders, images, etc. Identities identifies what
+  entities the fact will live on.
+
+  #+begin_src clojure
+
+(defattr email :entity/reference-number :string
+  {ao/identities #{:account/id :order/id :image/id}})
+
+  #+end_src
+
+- Identities is used by automatic resolver generators. The generator looks at
+  the schema(s) that it is responsible for. It looks at the identity and says
+  "if I have an :account/id then I can look up the attribute" (in this case :account/email)
+
+** Custom Resolvers
+https://youtu.be/H2XY5kdcjGU?t=2873
+
+- If you want additional resolution, E.g. you want :account/email to be
+  resolvable from something else - you could define your own custom pathom
+  resolver:
+
+  #+begin_src clojure
+
+(defresolver custom
+{::pc/input #{:account/email}
+::pc/output #{:account/id}}
+  (let [blah] (code that does query..)))
+
+  #+end_src
+
+- This would allow you to go from an :account/email to an :account/id and get
+  all the details from there.
+
+** Adaptors
+https://youtu.be/H2XY5kdcjGU?t=2930
+
+- If you have a custom plugin that requires data you can just put it in the
+  attribute map (:custom-plugin/thing 42)
+- That data will be in a lookup map in the environment of pathom.
+- Every resolver would have each of these facts about the attribute.
+- These are also cljc so make sure to wrap it in a reader conditional.
+- The model files becomes a "single source of truth" for data on both the
+  front-end and the backend about individual attributes.
+
+** Combining the Pieces
+https://youtu.be/H2XY5kdcjGU?t=2998
+
+- What a UI looks like
+- Basic UI just has some dropdown menus
+- Using RAD routing that can route straight to a UI component
+- Form helper than routes straight to a form
+- Form keyed by form options and the attributes I want
+- Primary address is a sub-form - a "to-one" relation
+- Adding additional addresses is a "to-many" relation
+- Timezone dropdown (type-ahead find)
+- Calculated fields, validation is supported
+- The URL tracks what is happening in the UI.
+
+
+
+*

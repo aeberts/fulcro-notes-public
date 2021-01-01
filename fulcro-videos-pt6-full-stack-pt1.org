@@ -1,0 +1,35 @@
+#+TITLE: Fulcro Videos Pt6: Full Stack Pt1
+
+
+* Fulcro - Part 6 : Full Stack Part One
+https://www.youtube.com/watch?v=F7QzFpo8pA0
+
+** Modifying Deps to Get Ready for Full Stack
+https://youtu.be/F7QzFpo8pA0?t=20
+
+- Add dependencies to deps.edn
+- Discussion of primary components (ring-core, http-kit, etc.)
+- Adding resources to the path
+- Make sure to check with dependencies get loaded by Intellij
+
+** How to build the server (src.app.server)
+https://youtu.be/F7QzFpo8pA0?t=176
+
+- High level discussion of pathom parser
+- High level discussion of server setup and middleware (app.server)
+- Setup of clojure REPL in Intellij
+
+** Tony's Intellij Keymaps
+https://youtu.be/F7QzFpo8pA0?t=386
+
+- Keymaps for "load file in repl", "Switch to Current NS", etc.
+- Adding REPL commands: "restart user namespace", etc.
+
+** How Restarting Works
+https://youtu.be/F7QzFpo8pA0?t=491
+
+- How code reloading works (OS resource management)
+- Using Mount to manage server components
+- Why fulcro use tools.namespace
+- Setting refresh dirs ("src" "dev") (should not check "resources")
+- No automatic hot code reload on server - trigger when ready.

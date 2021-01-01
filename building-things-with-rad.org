@@ -1,0 +1,12 @@
+#+TITLE: Building Things With Rad
+
+* Building Things with Fulcro RAD
+
+Personal notes on Tony Kay's video "Building Thigns with RAD"
+
+https://www.youtube.com/watch?v=P2up8qcDmJs&t=1s
+
+** Review of `defsc-form`:
+https://youtu.be/P2up8qcDmJs?t=640
+
+WIP..

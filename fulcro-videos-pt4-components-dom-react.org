@@ -1,0 +1,84 @@
+#+TITLE: Fulcro Videos Pt4 Components Dom React
+
+* Fulcro – Part 4 : Components, DOM, and React
+https://www.youtube.com/watch?v=vNKYl-5x8Ao&t=2s
+
+** Using a existing CSS library with Fulcro
+https://youtu.be/vNKYl-5x8Ao?t=57
+
+** Dom Performance by adding Options map
+https://youtu.be/vNKYl-5x8Ao?t=254
+
+** Dom/Div is both a Macro and a Function
+
+You can use map to create multiple divs:
+https://youtu.be/vNKYl-5x8Ao?t=176
+
+#+begin_src clojure
+
+(map div ["map" "over" "these" "strings"])
+
+#+end_src
+
+... would create a separate div for each string
+
+** Defsc Option Maps
+https://youtu.be/vNKYl-5x8Ao?t=405
+
+Fulco will help you with :query :ident and :initial-state options.
+You can put anything else you want in the options map (e.g. :meaning-of-life 42)
+
+Check component options with (comp/component-options Person)
+
+You can also add react lifecycle methods in the options map
+https://youtu.be/vNKYl-5x8Ao?t=529
+
+** Using Component Local State for Mutations:
+https://youtu.be/vNKYl-5x8Ao?t=728
+
+#+begin_src clojure
+
+...
+:initLocalState (fn [this props]
+                  {:a 2})
+
+;; anything you return here will go into the component local state (React feature)
+;; This can be used like a constructor
+;; component local state can be accessed using (comp/get-state this)
+#+end_src
+
+This is commonly used for callback functions because it avoids short circuiting
+the react render.
+
+#+begin_src clojure
+
+...
+:initLocalState (fn [this props]
+                  {:onClick (fn [evt] js/console.log "clicked")})
+(let [onClick (comp/get-state this :onClick)]
+  (div :.field
+       (label {:onClick onClick} "Name: ")))
+
+#+end_src
+
+Note! initLocalState is only initialized when the page is loaded so you must
+refresh to see changes during development.
+
+** Singleton elements and :ident
+https://youtu.be/vNKYl-5x8Ao?t=989
+
+It's not uncommon to have components that do not have a server identity but for
+which we do want an identity in our local app database.
+
+For example, this could be a single person list that we don't want to store in
+the database. Using the key and the id is not useful so we can use [:TABLE :id]
+E.g. [:PEOPLE :person/id]
+
+#+begin_src clojure
+
+:ident (fn [_ _] [:component/id ::person-list])
+
+#+end_src
+
+** Fixing a UI after component changes
+https://youtu.be/vNKYl-5x8Ao?t=1194

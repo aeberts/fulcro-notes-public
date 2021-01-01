@@ -1,0 +1,22 @@
+#+TITLE: Fulcro Videos Pt5 How Rendering Works
+
+* Fulcro - Part 5 : How Rendering Works
+
+Personal notes on Tony Kay's Fulcro videos: How Rendering Works
+
+https://www.youtube.com/watch?v=JBy_htHxygo
+
+** Overhead in Fulcro Components
+https://youtu.be/JBy_htHxygo?t=28
+
+1) Query
+2) Output of factories (virtual dom nodes)
+3) React DOM diff
+
+Ways to improve performance:
+
+1) Reduce the number of queries
+2) Reduce the number of factories that need to run
+3) Specify stable keys (regular React stuff)
+
+WIP...
