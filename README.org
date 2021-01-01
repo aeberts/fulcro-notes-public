@@ -1,0 +1,15 @@
+#+TITLE: Readme
+
+* Personal Fulcro Video Notes
+
+My personal notes on the [[https://github.com/fulcrologic/fulcro][Fulcro]] and [[https://github.com/fulcrologic/fulcro-rad][Fulcro RAD]] videos created by Fulcro author, Tony Kay.
+
+Notes are in org-mode format (but should be readable in any editor).
+
+** Completed Notes
+
+[[fulcro_rad_structural_overview.org][Fulcro RAD Structural Overview]]
+
+** Work in Progress Notes
+
+[[building-things-with-rad.org][Building Things with RAD]]
