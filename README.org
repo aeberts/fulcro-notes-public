@@ -1,4 +1,6 @@
-* Personal Fulcro Video Notes
+#+TITLE: Readme
+
+* Fulcro Video Notes
 
 My personal notes on the [[https://github.com/fulcrologic/fulcro][Fulcro]] and [[https://github.com/fulcrologic/fulcro-rad][Fulcro RAD]] videos created by Fulcro author, Tony Kay.
 
@@ -15,7 +17,9 @@ Notes are in org-mode format (but should be readable in any editor).
 *** Fulcro
 
 [[fulcro-videos-pt4-components-dom-react.org][Fulcro Video 4 : Components Dom & React]]
+
 [[fulcro-videos-pt5-how-rendering-works.org][Fulcro Video 5 : How Rendering Works]]
+
 [[fulcro-videos-pt6-full-stack-pt1.org][Fulcro Video 6 : Full Stack Part 1]]
 
 *** Fulcro RAD
