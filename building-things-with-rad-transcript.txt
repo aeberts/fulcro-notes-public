@@ -1,0 +1,775 @@
+0:03  
+In this video, I'm going to give you a kind of whirlwind tour of what it looks like to work with rad
+
+0:11  
+to work with Fulcro rad. The other video I've made, am I actually encoding it as we speak is when my CPUs are all spinning.
+
+0:19  
+It's about an hour long, and it covers more of some of the internal setup details, etc. I meant it to be more of a simpler overview, but there was a lot to cover, so it got long. So I'm making this one more of the shorter
+
+0:33  
+kind of give you the quick lowdown of what it looks like. So if you want to see how to set it up, you can either look at the source code of this project and watch the other video, you can look at the red book online.
+
+0:46  
+Like set the number of resources.
+
+0:50  
+But I do want to just give a quick kind of overview of what's here, what it looks like to play with, and, and what you get out of it.
+
+0:59  
+So in this demo, I do have a login set up the login is probably the least baked bit of of rad in general.
+
+1:08  
+But this you know, in dev mode, It even gives you just a you know, a filled in username and password and just make it easy for you to get in.
+
+1:20  
+The real power though, and I've got there's timezone support, there's date time, there's routing.
+
+1:29  
+Like, for example, if I go to view all, and I pick some row, and I change the sort order, and I, you know,
+
+1:37  
+have some settings like show inactive, and I'll disable somebody. So we see Sally's disabled, I'm sorted by name, I've got Sam highlighted, I can copy that URL, go to Safari, and paste that in. And I'll get well first I'll get a login.
+
+1:59  
+I don't have
+
+2:03  
+I don't have the forwarding after login set up on this project.
+
+2:09  
+And it'll take me to that exact view with that exact selected row with the same selected options. So so this this request parameter that's in here, encodes things like you know what line I'm on, or what what thing I have selected, you can see it here in Chrome as I reselect. The line you see over on the right right around in here, it's actually updating that this is actually a transit encoded base 64 encoded string of all of the parameters having to do with what I'm looking at.
+
+2:41  
+So you get some advanced html5 routing. And this html5 routing is not specifically tied to red, it's more just a layer stacked on top of standard full grows dynamic routing. So So don't think this is anything super special, you could actually just use that, that bit of red all by yourself. So let's look at this UI.
+
+3:03  
+And I cover the server quite a bit in the other video and a bit about the model in the other video. So I won't do any of that here. Look, look there for how the back end is working. I'm just going to talk mostly front end right here. Notice, however, these are all clj, almost all CL JC files, most of this stuff is meant to be used on the front end and the back end simultaneously.
+
+3:27  
+Some of this stuff is just front end only, like the client itself is a focal client that I'm only going to run in a browser. So it's just a folk Arad app. And this thing, like I said, is a half baked authorization system. So don't pay too much attention to that.
+
+3:48  
+And then these are kind of the startup and reload development kind of bits.
+
+3:56  
+So on the front end, I've got timezone support. So using the user settings, like once you've got them logged in, you could reset the timezone. So then all of the date time controls and such will automatically morph to use their timezone for for whenever a time is chosen. Route history is an add on to Brad's routing stuff, again, that can be used just standard Velcro, there's nothing super special about that. And this is the thing that's keeping track of things like route parameters in the in the URL and and hooking up to the event system. This is how you hook up a UI plugin. In this case, I'm using semantic UI plugin. And the rendering plugins are nothing more than a map of
+
+4:40  
+you know, for example, four
+
+4:44  
+forms to support a given data type with a given style. So for example, a string default is just this render field function. A string that should be rendered as a password is render password.
+
+5:00  
+etc. So you can expand this map and install your own controls to support specific types and styles in the UI. And then you can look at these predefined
+
+5:12  
+functions. For what that you know, what you would write, you can see here, the divs, and labels of the actual thing. And it's got pre pre built functions that you can call to say, Oh, well, they moved out of the input, they change the input. And then the data model is just handled for you, in terms of updating things, looking at is it visible is it read only, etc, those are all things that read has an opinion on how to do them, that you can choose to use or not.
+
+5:43  
+And so this looks pretty much like a standard full client. If you look at the full grown rad app, it really is just a full grow app with some preset things and presets, the HTTP remote for you, it adds in some eql transforms, and it sets the render to a multi render because it needs that for some of its internal pieces. So right, it's, it's just a standard Volker app with some add ons.
+
+6:11  
+Alright, so
+
+6:13  
+the UI.
+
+6:18  
+So the only handwritten UI in this particular thing, and I view I use this for mobile as well, by the way,
+
+6:24  
+there's, there's nothing specific to any of rads core code that has anything to do with UI, the UI is always in a plug in external. So there's no react Dom refs in Volker rat.
+
+6:35  
+So you can use it with native.
+
+6:38  
+So you can see this, this handwritten part of the UI is only 108 lines long. That's that's all of the UI that I wrote for this entire project that has things like reports with graphs and pivot tables, and you know, alternate groupings and date ranges, and,
+
+6:57  
+you know, invoices that have calculated fields and pickers
+
+7:02  
+and, etc, oops, hit the wrong key.
+
+7:09  
+So
+
+7:11  
+getting a lot of leverage there. So I'm using semantic UI and semantic UI react, for my UI in this in this thing, and I've got a
+
+7:21  
+semantic UI library that I use, that just just basically gives you a quick and easy wrappers to the individual pieces of semantic UI. So I want a drop down menu I'm using, you know, this can be Excel, give you some doc string, and such and then handle regular closure script props, instead of having to pass pound j s,
+
+7:42  
+data to these things.
+
+7:45  
+So I've got dropped down menus. And this route to function, if you look at it is just a dynamic route, change route that has some extra bits, right, it looks to see if you've got history installed. It's got this absolute path helper that tries to figure out via, you know, various bits,
+
+8:07  
+where a particular route target lives in your UI. So dynamic routing, can't guarantee a given component is unique within the hierarchy. But read these this, these routing helpers, assume that you're only going to ever put up, you know, a form that primarily deals with a thing in one place in your UI. So we can kind of safely just look for it. And the first one we find will be the right one. So and, you know,
+
+8:37  
+it basically tells that, so don't use a route target and multiple paths in your application because you can get an unpredictable result.
+
+8:47  
+And then there's the
+
+8:51  
+the semantic UI, is it semantic UI is just a different namespace, actually, or
+
+8:59  
+there's some history support kinds of things. So if you have history support, you can do things like back.
+
+9:07  
+Okay, so that makes these really easy. So even though account list could be nested somewhere deep in my UI tree, I can just say route to and just give it the class. Remember that there is a
+
+9:22  
+registry key to class function in folco, that lets you look these up by their their fully namespace keyword. So this guy has in common example, UI account forms, account form or account list. And so I could look that up, you know, by by putting a keyword version of that here. So this This prevents circular reference problems.
+
+9:47  
+So I can do route two, I can do things like form creates.
+
+9:51  
+On the route tos I can pass
+
+9:55  
+specific things like I can route to the invoices for
+
+10:00  
+Count 101
+
+10:02  
+right? That's how this link over here is working invoices for account 101 Yes, I want to go. And I don't have any.
+
+10:12  
+But, you know, any route params that you pass this route to will show up in the route parameters of the of the RAD components based on their controls and such.
+
+10:26  
+Okay, so this really is nothing more than a menu. So let's look at something more interesting. Let's let's look at
+
+10:32  
+the invoice the invoice is probably the most interesting
+
+10:36  
+thing in this entire demo. So invoice list is a report now report in red is really just something that runs a top level query, there's the query key source attribute,
+
+10:50  
+you can tell it what each rows Well, you have to tell it what each rows ID is going to be. So it doesn't, it doesn't necessarily know from this, what the primary key of those things are,
+
+11:03  
+was just a key word it actually can't know. So this tells you what the primary key of these rows are. And then the columns lists up things you want to show. And the UI, really, this just builds the query and then the UI plugin can choose to show these based on things that are in the individual attributes. And those those these are attributes. So I can jump to one and look and see Oh, it's field label on the form as name, it goes on account entities, it's in the atomic schema production schema, well, it's in the production schema, which I happen to know is the dynamic database on this guy, and this, this attribute is required.
+
+11:43  
+So in this invoice list,
+
+11:46  
+let me put that to the right and this to the left.
+
+11:50  
+So view all here's my invoice list, invoice number, date, customer name.
+
+11:59  
+And of course, then I can do fun things like
+
+12:03  
+you know, move a column. And the while update and the column will move,
+
+12:10  
+I can change things about the control layout. So if I want the new account to be on the left and the new invoice to be on the right, I can do that, I can define what controls are available, right, so this new invoice is a new invoice button whose action creates an invoice form using invoice for a form.
+
+12:33  
+similar sort of thing is just declarative.
+
+12:37  
+And these are all route targets. And you give them a route prefix to give them kind of an A unique location. So if I go to
+
+12:44  
+notice on this report, I've got a route of invoices.
+
+12:50  
+And then if I click on new invoice, I'm on invoice create,
+
+12:56  
+which is a sub route of this guy.
+
+13:01  
+So there's a lot of a lot of glue going on here, putting things together.
+
+13:07  
+And there are a lot of options and pieces and too many management's on and so forth. Again, the book kind of give you that but I wanted to show you
+
+13:15  
+briefly
+
+13:18  
+what this looks like to kind of build up
+
+13:23  
+one of these. So to ICL JC
+
+13:28  
+so I've got
+
+13:33  
+all these various little red things in here.
+
+13:38  
+I've already got four.
+
+13:45  
+The important thing to note is that these macros,
+
+13:50  
+let's see now let's, let's make a new form for widget.
+
+14:03  
+And then I want form options. So I get my doc strings because I don't remember these very well either.
+
+14:14  
+Okay, so
+
+14:25  
+all right, so let's say this is gonna be widget ID and I don't have widget yet. So I'm going to go to my model directory here. I'm going to create closure, CL JC, widget namespace, I'm going to go and grab say maybe addresses requires.
+
+14:46  
+And then maybe I'll grab an ID attribute. I'll call this widget ID.
+
+14:55  
+It's not SQL, it's going in there. And then
+
+15:00  
+Let's say I want widget name, which is a string. It's not an identity.
+
+15:11  
+But it's in the production schema.
+
+15:17  
+Back over my UI, now I can say give me
+
+15:30  
+Okay, so now, and this guy will give me
+
+15:34  
+Oh, excuse me, line seven on widget. Oops.
+
+15:41  
+Okay, oh, let's call that widget label. So we don't have
+
+15:48  
+conflict in our closure functions.
+
+15:53  
+Okay, and then if I look at my console over here, this is probably giving me a warning telling me it's not going to be a routable thing, because I didn't give it a route. So
+
+16:01  
+widget forum does not have a route prefix and won't be. Alright, so form option, route prefix widget.
+
+16:13  
+So that should load up and I should be okay. Now, I'm going to go to my main router here, and I'm going to add
+
+16:21  
+widget form to my target list.
+
+16:27  
+Okay, now, I haven't added widget to my database model yet. So I'm gonna say def attributes, ID and labels, I'm just creating a vector of the things that I've defined in this namespace. And then I've got a model clj, see kind of top level thing
+
+16:46  
+where I track all of my.
+
+16:59  
+So I'm going to add that to my model here, STV W.
+
+17:08  
+Alright, that's a CL JC file. So now both my client, which I'm going to reload just to make sure that
+
+17:15  
+it gets gets its, its stuff up to date from that models model changes. And my server
+
+17:24  
+by server is configured to use this to figure everything out. So if I go over here and restart my server,
+
+17:33  
+I'm gonna clear this Oops, wrong key
+
+17:37  
+here that first, I'm going to restart my server with my keyboard shortcut. And I'm going to scan through this and see if it said anything about
+
+17:52  
+widget
+
+17:54  
+does not seem to have said anything about widget.
+
+17:58  
+Oh, sorry, I'm searching in the wrong window. There it is. Checking schema production attribute for widget ID.
+
+18:05  
+widget label. Here's my auto generated schema migration that it made. So it made widget ID and indexed you UID unique identity and widget label a string.
+
+18:23  
+Oh, and I just discovered a bug.
+
+18:31  
+In order to tell this what
+
+18:37  
+entity this particular attribute lives on, I have to tell it which things identify it. So I could have a widget label, I could have a widget.
+
+18:46  
+Wait.
+
+19:02  
+So I'm restarting again. And so
+
+19:07  
+notice that
+
+19:09  
+lots of time zones. This is my data migration that got generated. So if I look for widget
+
+19:19  
+in there, here we go. widget ID widget label widget weight, type double widget, we check the schema. So there's three things that de Tomic plugin supports, it supports checking your schema. So if you want to generate yourself fine, it supports generating it optional.
+
+19:41  
+It's a good idea to at least have it check it to make sure your model matches what's in the database, and then building resolvers.
+
+19:49  
+and building the resolvers happens from this identities thing. The identities thing basically says if you give me a widget ID, I can give you a label. If you give me a widget ID I can give you a weight and so this was
+
+20:00  
+resolver basically says, Give me a widget ID and I can give you a label and wait.
+
+20:06  
+Right? So we have automatic network API generated from that if I go over here and inspect, and go to the query tab, and ask for my indexes here, I can do a join on widget ID. And it should know now that
+
+20:28  
+Oh, sorry, that should be an ident, widget ID, one sub query of widget,
+
+20:35  
+label, or widget, height, weight, whatever. Right? Of course, there's not a widget in the database. So it tells me that's not found. But notice it understands
+
+20:47  
+what I'm talking about. This also gets me saved support, because my de Tomic plugin already knows how to take a diff off of this and put it in the database.
+
+20:59  
+So I got my network API, I got my schema validation, I got my schema generation.
+
+21:06  
+All I had to do was declare my data model and say it was in this this schema.
+
+21:14  
+And then the schema, of course is defined in the server side stuff, watch the other video
+
+21:18  
+for that. Okay, so now I've got those. Let me go back to my UI here. So fo attributes, this is my list of things.
+
+21:33  
+Oh, I don't have a render for doubles. Let me change that to numeric.
+
+21:40  
+Yeah, my rendering plugin doesn't understand doubles yet. I almost the software I write I it's almost all money. So it's all big decimal, which I think I do via numeric.
+
+21:57  
+Oh, decimal, decimal is what I call, right, that's a big decimal data type.
+
+22:03  
+So I'm going to restart my server.
+
+22:06  
+Let it tell me
+
+22:08  
+that now wait is a big decimal, which I'm sure it is, I'm not gonna worry about looking at it again.
+
+22:17  
+Okay, attributes, those are installed, I've got my network API. And come back over here, I can say that widget form should let me edit the label and wait. And so now I should be able to go down here. And let's add ourselves.
+
+22:37  
+Let's add ourselves a new menu called
+
+22:43  
+widget.
+
+22:45  
+Create Widget for
+
+22:55  
+my widget for hope, that looks lovely. I forgot to title. My render is obviously, like I said, the rendering is is like the
+
+23:05  
+but again, you're probably the whole point is you're not gonna
+
+23:09  
+necessarily release the rendering bit to the, to the world, it's sort of back end standard up quickly.
+
+23:21  
+There we go. fixes that are.
+
+23:23  
+So labels, some label, weight, 42.0. I'm going to open the developer tab here, show you Volker inspect on here,
+
+23:34  
+show you the network, and say save.
+
+23:39  
+So you can see what went across was a save form. It knew this was a new thing. So it had a temp ID.
+
+23:46  
+And in the Delta, it said the widget ID was this temp ID, it had a label that used to be nothing and is now some label and had a weight that used to be nothing and it was 42 the back end, and then it has a following query that says and reread it from the database once you've saved it. So this basically saves it and then reread it.
+
+24:04  
+So if we go look at our back end, our back end saw.
+
+24:11  
+Save was invoked.
+
+24:14  
+We looked up and found all the schemas that were involved in that because it could save across multiple databases, then the de Tomic database adapter,
+
+24:23  
+found the bits that were of interest to it, turned that into a transaction
+
+24:29  
+added to the database.
+
+24:32  
+And then this is it rerunning the query to return the response to the client. And if I look at the response here, you'll see save form,
+
+24:41  
+returned temp, Id remapping, and then the things that were saved in the database. Okay, so I've got one in the database. Now I could go and add another one.
+
+24:52  
+Other widget. Wait, 99 save. Okay, so now I got a couple in the database.
+
+25:00  
+How do I look at them? Well, that's the purpose of a report.
+
+25:11  
+And you do have to name these don't be tempted to do that.
+
+25:15  
+These macros actually just spit out a FSC. And they actually use whatever symbol you give here, internally that can be fixed, but I just haven't had the time.
+
+25:30  
+Alright, so I haven't imported that one. So let's copy these two and say report and report options.
+
+25:38  
+Report.
+
+25:41  
+report
+
+25:43  
+as our Oh, that back to the right, so we can see if there are compile errors as we go.
+
+25:52  
+And, okay, what does it not like about this? Okay, missing invalid option, okay. So, report needs report options slash,
+
+26:03  
+see if I can remember
+
+26:05  
+needs to another route. So we're going to show the widgets here.
+
+26:10  
+It needs to know, the
+
+26:15  
+row primary key, which is going to be is that a key word or a attribute? an attribute
+
+26:22  
+can be widget ID.
+
+26:25  
+And it's going to need to know the columns that you want to see. So let's just look at widget label
+
+26:35  
+is that all I need? Nope, still missing something invalid option, no source attribute, I have to tell it where to find.
+
+26:47  
+So I have to write a top level query that can can find those. So I'm just going to go back to the model widget newspace, I'm going to put it in here.
+
+27:06  
+And this is going to be a rough type, it's not going to be in a schema, it's not going to have identities. Instead, what it's going to have is a PC in no input, a PC output, where this is a path home.
+
+27:22  
+Connect.
+
+27:25  
+Right. So in the other video, I mentioned some of the details of this, but basically an attribute can specify how it's resolved.
+
+27:33  
+You could also just define a resolver. But if you define it as an attribute, you get some other pieces out of it sometimes. So my output here is going to be
+
+27:45  
+join on widget, all widgets,
+
+27:51  
+on widget, ID.
+
+27:56  
+And then my resolve function is going to be a function that gets the end. And I'm going to go look at
+
+28:04  
+database queries to just remind myself of how I get the database out of the end.
+
+28:12  
+So that there's the way I get the production database out. And so I'm going to run a query where I have a widget
+
+28:20  
+ID
+
+28:23  
+on an entity. And I'm going to pull all those IDs and our map over that. I'm going to say widget ID
+
+28:36  
+oops.
+
+28:38  
+That's gonna be my vector. And then this should be widget, all
+
+28:46  
+widgets of that vector.
+
+28:51  
+Then I need the diatonic.
+
+29:00  
+Add all widgets to the list of attributes.
+
+29:05  
+This is
+
+29:14  
+I can define this in CL JC but when I do the resolve, I have to do that only enclosure.
+
+29:20  
+And what else do I have here? That's wrong.
+
+29:27  
+Oh, I don't have the de Tomic namespace in here.
+
+29:39  
+Okay, that should fix that up.
+
+29:43  
+I should be able to restart this maybe not.
+
+29:50  
+Pyne 31. Oh,
+
+30:02  
+Okay, so now back to my query tab, load my indexes. And let's try out this widget.
+
+30:12  
+All widgets, widget, ID or widget label. Oh, I don't have any widgets in the wrong number of hours. Okay, so we did screw up our query here
+
+30:25  
+is passed to the model widget.
+
+30:48  
+Oh,
+
+30:51  
+there is no input in this particular case. But that's a, that's a two arc function.
+
+31:01  
+Okay. So
+
+31:04  
+if we go back here, new back end, so I lost my
+
+31:09  
+save those run that query. Okay. So my query is working.
+
+31:15  
+Okay, so you see how, you know, basically just write a database query and resolve the IDs. And then once the ID is resolved, the automatic resolvers can go from IDs to labels, or wait.
+
+31:30  
+Number report, back in the UI has everything it needs. I can, I can get a source attribute widget all widgets, tell it what the columns are, tell it what each row is, can have a widget ID that's for like linking the forums and that sort of thing.
+
+31:45  
+And so now widget list needs to go on my list of routes.
+
+31:51  
+And now widget list
+
+32:07  
+should be something I can route to.
+
+32:13  
+Oh, what did I call it?
+
+32:15  
+I just misspelled
+
+32:23  
+Oh, and route two takes parameters?
+
+32:29  
+Oh, no, it doesn't take parameters. Don't us. Sorry, what it's complaining about?
+
+32:36  
+Oh,
+
+32:40  
+why do I have that? Oh,
+
+32:45  
+I'll admit it in the wrong line.
+
+32:51  
+Okay. And it does take parameters, these parameters show up and allow you to set controls on a report dynamically. So anything you pass here will actually show up in the control settings. Okay, so now I should be able to go to my list widget. And oh, I didn't give it a control. And I didn't tell it to run on Mount. So it didn't show me anything.
+
+33:20  
+There we go. So there's, there's my report.
+
+33:26  
+And then you just build out from there. So
+
+33:49  
+and these again, the stuffs in the documentation.
+
+33:53  
+And then most of these things
+
+33:57  
+are as simple as C i think you get the instance of this and that lambda.
+
+34:07  
+What is it called?
+
+34:10  
+Yeah, run report, which takes this
+
+34:16  
+Okay, so let's take a run on Mt off of here.
+
+34:22  
+reload this, we should get an empty report.
+
+34:26  
+Oh, I lost my session. Like I said the logins not quite there, Ron. Okay, so now I've got a way to update the report.
+
+34:36  
+Now,
+
+34:38  
+the thing that I wanted to show you
+
+34:40  
+next, was that
+
+34:44  
+you get you're getting a lot of just automatic stuff here. But then you might be wondering, well, but what if I don't want the automatic thing or what if I'm working on this? In some other context, I want to use your semantic UI I'm I'm in native
+
+35:00  
+There's no native plugin yet? Well, as soon as you want,
+
+35:07  
+you can just take over
+
+35:12  
+the UI.
+
+35:14  
+And the UI has in it
+
+35:21  
+exactly what you'd expect in a fulcrum component. Oh, there is no label yet because I'm
+
+35:28  
+I didn't go to Edit one. Here, let me do
+
+35:34  
+links from qualified key
+
+35:40  
+league or is it for form links? That's what I want formally shorthand for turning in column values links.
+
+35:49  
+Okay, so I could say for widget label, because that's on the report, use widget form.
+
+36:01  
+And now if I go to list widgets, and click on the label, it'll take me to that form with that. Guys label. So now I'm editing. Right that widget.
+
+36:12  
+So, you know, now I can just make a DOM input whose
+
+36:20  
+value is that.
+
+36:23  
+And
+
+36:26  
+on change, I'm going to have a function that gives me an event.
+
+36:31  
+And I can use EBT.
+
+36:34  
+This is a standard
+
+36:36  
+folco helper that's in clj. So please send CL JC
+
+36:56  
+Yeah, so that's a CLG. c file. So it's got like predefined things that will compile and CLG and CL j s, but will give you things like event target value and clgs. So it's just handy to
+
+37:08  
+when you're building clj c files, so the target value of the vt. And then what I want to do here is in order to get the form logic support, I can use the forum namespaces input changed event. And notice this takes
+
+37:28  
+a rendering environment. And it's looking for form instance and master form, you can have nested forms. So basically, you just said both of those colon colon form keys to this. So form changed. And I should make a helper function for this.
+
+37:50  
+Think that's what that takes Oh, key and value, for instance,
+
+37:53  
+Master form, key.
+
+38:01  
+Okay, so over here, I can go find my widget, there's only one that's real, right, I've got that other one that I started to add, but didn't save.
+
+38:09  
+So there's my Lj.
+
+38:13  
+Right? So I'm editing the widget label, I'm in control of the UI. And then when I decide I want to website, wherever it is that I want to put
+
+38:28  
+my Save button.
+
+38:35  
+Same sort of thing, it takes a form rendering environment, the render can pass anything down through that map. But the only thing that's required is what's listed in the in the kind of the doc string there. So.
+
+38:51  
+So again, the forms can be nested if you look at the rendering source code.
+
+38:56  
+Okay, so I'm going to go look at the network, I'm going to clear this, I'm going to click on my save, you see the diff go across,
+
+39:06  
+we see the transaction go in the database, we see the re query
+
+39:12  
+response on this gives me the new thing I typed in.
+
+39:18  
+So this is really,
+
+39:24  
+you know,
+
+39:25  
+to me, the crux of it, is if I if I if I like what rad does for me, and the auto generated rendering plugin. Alright, use it. As soon as I don't want to use it. Alright, don't use it. You still get the logic of load save of minimal form diffs No, notice that this save here just sent label, even though it knew wait was one of the things that could be saved. It hadn't changed. Right. So when I when I have this, this guy here and forum state's been around and folco for years
+
+40:00  
+If I take that eff off, notice the buttons change. Now if I'm literally going to type the letter F, notice, it could figure out that the forms now unchanged, there was no IO to the server anything, it actually keeps a copy of the original form
+
+Transcribed by https://otter.ai
