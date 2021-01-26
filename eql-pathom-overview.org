@@ -1,0 +1,204 @@
+#+TITLE: Eql Pathom Overview
+
+Understanding EQL and Pathom are the other most important skills you will need to understand when starting out with Fulcro.
+
+* Notes
+
+- Focused on EQL (don't mention fulcro and pathom)
+- Quiz-style (present idea and quiz for other examples)
+- Static to get the base done and them make interactive
+- 3 levels of nesting (maybe person, friends and groups?)
+- Look at existing GraphQL tutorials
+- Look at learndatalogtoday.org
+
+- Separate Pathom tutorial that takes EQL examples and expands on them.
+
+* What is EQL and Pathom?
+
+EQL is a way to query and mutate hierarchical data. It works particularly well with graph-like data (i.e. data organized in trees or connected graphs) but it can be used with many different types of data sources (datomic, SQL databases, REST APIs, GraphQL endpoints, etc).
+
+EQL has been compared to GraphQL and there are many similarities between the two technologies. EQL, however, is more clojure-centric and because it uses Extensible Data Notation (EDN) as it's data format it's a better fit for clojure applications.
+
+Like GraphQL, EQL is just a specification for how to describe and query data and it needs an actual implementation to do work. Pathom is a Clojure implementation of EQL (just like Apollo is an implementation of GraphQL).
+
+It is important to note that the following examples are provided to help you understand EQL syntax but you will need an implementation (like pathom plus a data source) to explore EQL in the real world. Whether you will be able to perform the queries below in your real-world implementation depends on the features provided by your data source and the "resolvers" that have been setup (more on resolvers in the EQL in the real world section).
+
+* Why Use EQL vs REST?
+
+<TBC>
+- EQL exists to allow different clients (e.g. web, mobile, set-top box) to request the data they need without requiring developers to create and maintain a large number of "special purpose" REST endpoints for each different client.
+- EQL allows clients to define the "shape" of the data they need without the burden of having to "munge" the data on the client once they receive it from the API endpoint.
+- EQL is a a good choice if you are writing a new application and do not have to support legacy clients who are written for existing REST APIs.
+- EQL implementation like Pathom allow clients to interactively query datasources making it easier for developers to discover and mould the data they need during development.
+
+* Getting Started with EQL
+
+Before diving into the details and featured of EQL, let's explore some basic EQL queries so we can get a feel for the syntax. If you are familiar with Clojure, EQL will probably look quite familiar as it uses many common Clojure data structures namely, keywords (:keyword), vectors "[]", and maps "{}".
+
+To explore EQL queries we'll need some data. While EQL and Pathom can connect to multiple, different data sources at the same time, to keep things simple we'll use the following basic data structure as our initial data source:
+
+#+begin_src clojure
+
+[{:list/id  1
+  :list/name "Personal"
+  :list/items [{:todo/id 1
+                :todo/label "Buy Milk"
+                :todo/status :notstarted}
+               {:todo/id 2
+                :todo/label "Cook Dinner"
+                :todo/status :notstarted}
+               {:todo/id 3
+                :todo/label "Mail Letter"
+                :todo/status :notstarted}]}
+ {:list/id  2
+  :list/name "Work"
+  :list/items [{:todo/id 4
+                :todo/label "Write TPS Report"
+                :todo/status :notstarted}
+               {:todo/id 5
+                :todo/label "Send Emails"
+                :todo/status :notstarted}
+               {:todo/id 6
+                :todo/label "Have Meeting"
+                :todo/status :notstarted}]}]
+
+#+end_src
+
+One way to think about EQL queries is to "describe the shape of the data" that you want. To do this we use vectors "[]". For example, to make a query on our example code we could write:
+
+#+begin_src clojure
+
+[:list/id :list/name]
+
+#+end_src
+
+and we would receive:
+
+#+begin_src clojure
+
+{:list/id 1 :list/name "Personal"
+ :list/id 2 :list/name "Work"}
+
+#+end_src
+
+It's just like using `select-keys` to specify which fields to extract from a map. You can think of individual pieces of data as "leaves" at the end of a tree of data. In EQL the leaves are called "properties".
+
+
+** Background on Joins
+
+One of the primary functions in EQL is "join". If you are already familiar with joins you can skip ahead to the next section.
+
+The idea of a "join" is common in relational and graph databases and it refers to linking one record's unique key in another records data. For example:
+
+Email Table
+| UserPrimaryKey | UserEmail    |
+|----------------+--------------|
+|           1001 | joe@foo.com  |
+|           1002 | bill@baz.com |
+
+UserName Table
+| UserPrimaryKey | FirstName | LastName |
+|----------------+-----------+----------|
+|           1001 | Joe       | Walsh    |
+|           1002 | Bill      | Jones    |
+
+In this simple example, if you had the "UserEmail" you could get the "FirstName" and "LastName" by doing a join on the "UserPrimaryKey" column. To be more explicit, if you had "joe@foo.com" you could do a join from the "Email" table to the "Username" table to look up the first name "Joe" and the last name "Walsh" of this user with email "joe@foo.com". This is possible because the rows in the different tables are identified by the same "UserPrimaryKey" (in this case "1001").
+
+Joins in Entity Attribute Value databases and graph databases work in a similar way:
+
+If we took our example data from above and put it into a "pseudo" graph database format separating the concepts of Lists and Items into their their own structures we could come up with something like this:
+
+#+BEGIN_SRC clojure
+
+{:LIST  { 1 {:list/id 1
+             :list/name "Personal"
+             :list/items [[:ITEM 1] [:ITEM 2] [:ITEM 3]]}
+          2 {:list/id  2
+             :list/name "Work"
+             :list/items [[:ITEM 4] [:ITEM 5] [:ITEM 6]]}}
+ :ITEM {  1 {:item/id 1
+             :item/label "Buy Milk"
+             :item/status :notstarted}
+          2 {:item/id 2
+             :item/label "Cook Dinner"
+             :item/status :notstarted}
+          3 {:item/id 3
+             :item/label "Mail Letter"
+             :item/status :notstarted}
+          4 {:item/id 4
+             :item/label "Write TPS Report"
+             :item/status :notstarted}
+          5 {:item/id 5
+             :item/label "Send Emails"
+             :item/status :notstarted}
+          6 {:item/id 6
+             :item/label "Have Meeting"
+             :item/status :notstarted}}
+
+#+END_SRC
+
+In this case we can access the individual items in list 1 by doing a "join" from the LIST table on the ITEM table using the ITEM IDs. To be more explicit, we can see that the LIST with ID 1 refers to ITEM 1, ITEM 2 and ITEM 3 and we can get those items buy doing a join from the LIST table on the ITEM table.
+
+One of the cool things about EQL is that regardless of your datastore's underlying implementation (SQL, Datomic, REST API, etc.) you will be able to access any of your data using EQL queries.
+
+** Joins in EQL
+
+In addition to asking for properties (i.e. the data at the "leaves" of the tree like ":user/email"), we can also easily query for nested data from our example data using the map "{}" syntax. As mentioned above, this is called a "join" and indicates that we want to query for related or "nested" data.
+
+For example, let's say that we want to query for the individual todo items from our original data structure in the "Getting Started" section. To get this data, we would use the "{}" syntax to issue a join on :list/items like so:
+
+;; FIXME - verify if this query is valid!!
+
+#+begin_src clojure
+
+[:list/id :list/name {:list/items [:todo/label]}]
+
+#+end_src
+
+... and we would receive:
+
+#+begin_src clojure
+
+[{:list/id 1 :list/name "Personal" :list/items {:todo/label "Buy Milk" :todo/label "Cook Dinner" :todo/label "Mail Letter"}}
+{:list/id 2 :list/name "Work" :list/items {:todo/label "Write TPS Report" :todo/label "Send Emails" :todo/label "Have Meeting"}}]
+
+#+end_src
+
+Notice a couple of things about the example above:
+
+- We used a clojure map "{}" around {:list/items ...} to query for the nested data. The map goes *before* the name of the item that you want to join on.
+- We only asked for the :todo/label in the query. That's why the result include the properties of :todo/id and :todo/status
+- The syntax for an EQL join ia a map. The map's key is the item you want to "join on" and the map's value is a vector of the properties you want in your result.
+- The value part of a join is called a "sub-query". I.e. in the join {:list/items [:todo/label]} - "[:todo/label]" is the sub-query.
+
+* EQL in the Real World
+
+As mentioned at the beginning of this tutorial, EQL is just a specification and, as such, it needs an implementation to be able to use it in a project. Pathom is the implementation of EQL used in Fulcro and while this is not a Pathom tutorial, it's useful to discuss at a high level, how Pathom implements the EQL specification.
+
+Pathom Setup
+- What pieces are needed for pathom to work? ()
+- What is a resolver?
+-
+
+* EQL Pathom and Fulcro
+
+Since this is a Fulcro tutorial let's switch to an example where we can explore how EQL/Pathom works in the context of Fulcro.
+
+We'll use the Fulcro-RAD-Demo together with the Fulcro Inspector Chrome extension.
+
+** Project Setup and Configuration
+
+<Jakub - ideally we would have a Fulcro app running in the page that would allow the user to install the fulcro inspector and issue queries from the EQL tab of the inspector but installing and running Fulcro-RAD-Demo is a good workaround>
+
+- Git clone repo : https://github.com/fulcrologic/fulcro-rad-demo
+- Install Fulcro Inspector : https://chrome.google.com/webstore/detail/fulcro-inspect/meeijplnfjcihnhkpanepcaffklobaal
+- Install clojure cli (brew install clojure)
+- Install npm or yarn (brew install yarn)
+- Start front-end (shadow-cljs)
+- Start backend (clojure)
+
+** Queries from the Fulcro Inspector EQL Tab
+
+- Connect tab using button
+- Start writing queries and see completion popup appear.
+- Issue a global query for
