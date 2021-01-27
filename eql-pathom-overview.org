@@ -40,32 +40,33 @@ Also, please note that the following is geared towards beginners and at times ma
 
 Before diving into the details and featured of EQL, let's explore some basic EQL queries so we can get a feel for the syntax. If you are familiar with Clojure, EQL will probably look quite familiar as it uses many common Clojure data structures namely, keywords (:keyword), vectors "[]", and maps "{}".
 
-To explore EQL queries we'll need some data. While EQL and Pathom can connect to multiple, different data sources at the same time, to keep things simple we'll use the following basic data structure as our initial data source:
+To explore EQL queries we'll need some data. Let's assume that we have a server that when asked for :all-items responds with the following:
 
 #+begin_src clojure
 
-[{:list/id  1
-  :list/name "Personal"
-  :list/items [{:todo/id 1
-                :todo/label "Buy Milk"
-                :todo/status :notstarted}
-               {:todo/id 2
-                :todo/label "Cook Dinner"
-                :todo/status :notstarted}
-               {:todo/id 3
-                :todo/label "Mail Letter"
-                :todo/status :notstarted}]}
- {:list/id  2
-  :list/name "Work"
-  :list/items [{:todo/id 4
-                :todo/label "Write TPS Report"
-                :todo/status :notstarted}
-               {:todo/id 5
-                :todo/label "Send Emails"
-                :todo/status :notstarted}
-               {:todo/id 6
-                :todo/label "Have Meeting"
-                :todo/status :notstarted}]}]
+{:all-items
+ [{:list/id  1
+   :list/name "Personal"
+   :list/items [{:todo/id 1
+                 :todo/label "Buy Milk"
+                 :todo/status :notstarted}
+                {:todo/id 2
+                 :todo/label "Cook Dinner"
+                 :todo/status :notstarted}
+                {:todo/id 3
+                 :todo/label "Mail Letter"
+                 :todo/status :notstarted}]}
+  {:list/id  2
+   :list/name "Work"
+   :list/items [{:todo/id 4
+                 :todo/label "Write TPS Report"
+                 :todo/status :notstarted}
+                {:todo/id 5
+                 :todo/label "Send Emails"
+                 :todo/status :notstarted}
+                {:todo/id 6
+                 :todo/label "Have Meeting"
+                 :todo/status :notstarted}]}]}
 
 #+end_src
 
@@ -75,7 +76,7 @@ For example, to make a query on our example code that asks for the :list/id and 
 
 #+begin_src clojure
 
-[:list/id :list/name]
+[{:all-items [:list/id :list/name]}]
 
 #+end_src
 
@@ -83,8 +84,9 @@ and we would receive:
 
 #+begin_src clojure
 
-{:list/id 1 :list/name "Personal"
- :list/id 2 :list/name "Work"}
+{:all-items
+ [{:list/id 1 :list/name "Personal"}
+  {:list/id 2 :list/name "Work"}]}
 
 #+end_src
 
@@ -155,11 +157,9 @@ In addition to asking for properties (i.e. the data at the "leaves" of the tree 
 
 For example, let's say that we want to query for the individual todo items from our original data structure in the "Getting Started" section. To get this data, we would use the "{}" syntax to issue a join on :list/items like so:
 
-;; FIXME - verify if this query is valid!!
-
 #+begin_src clojure
 
-[:list/id :list/name {:list/items [:todo/label]}]
+[{:all-items [:list/id :list/name {:list/items [:todo/label]}]}]
 
 #+end_src
 
@@ -167,8 +167,17 @@ For example, let's say that we want to query for the individual todo items from 
 
 #+begin_src clojure
 
-[{:list/id 1 :list/name "Personal" :list/items {:todo/label "Buy Milk" :todo/label "Cook Dinner" :todo/label "Mail Letter"}}
-{:list/id 2 :list/name "Work" :list/items {:todo/label "Write TPS Report" :todo/label "Send Emails" :todo/label "Have Meeting"}}]
+{:all-items
+ [{:list/id 1
+   :list/name "Personal"
+   :list/items [{:todo/label "Buy Milk"
+                 :todo/label "Cook Dinner"
+                 :todo/label "Mail Letter"}]}
+  {:list/id 2
+   :list/name "Work"
+   :list/items [{:todo/label "Write TPS Report"
+                 :todo/label "Send Emails"
+                 :todo/label "Have Meeting"}]}]}
 
 #+end_src
 
@@ -186,70 +195,70 @@ If you have nested data then you can use nested joins to access that data. For e
 
 #+begin_src clojure
 
-[{:list/id  1
-  :list/name "Personal"
-  :list/items [{:todo/id 1
-                :todo/label "Buy Milk"
-                :todo/status :notstarted
-                :todo/notes [{:note/id 1
-                              :note/content "Maybe chocolate milk?"}
-                             {:note/id 2
-                              :note/content "Yes, definitely chocolate milk"}]
-                }
-               {:todo/id 2
-                :todo/label "Cook Dinner"
-                :todo/status :notstarted
-                :todo/notes [{:note/id 3
-                              :note/content "Dinner ideas: Pesto Pasta"}]
-                }
-               {:todo/id 3
-                :todo/label "Mail Letter"
-                :todo/status :notstarted}]}
- {:list/id  2
-  :list/name "Work"
-  :list/items [{:todo/id 4
-                :todo/label "Write TPS Report"
-                :todo/status :notstarted
-                :todo/notes [{:note/id 4
-                              :note/content "Don't forget the cover sheet!"}]}
-               {:todo/id 5
-                :todo/label "Send Emails"
-                :todo/status :notstarted}
-               {:todo/id 6
-                :todo/label "Have Meeting"
-                :todo/status :notstarted}]}]
+{:all-items
+ [{:list/id  1
+   :list/name "Personal"
+   :list/items [{:todo/id 1
+                 :todo/label "Buy Milk"
+                 :todo/status :notstarted
+                 :todo/notes [{:note/id 1
+                               :note/content "Maybe chocolate milk?"}
+                              {:note/id 2
+                               :note/content "Yes, definitely chocolate milk"}]}
+                {:todo/id 2
+                 :todo/label "Cook Dinner"
+                 :todo/status :notstarted
+                 :todo/notes [{:note/id 3
+                               :note/content "Dinner ideas: Pesto Pasta"}]}
+                {:todo/id 3
+                 :todo/label "Mail Letter"
+                 :todo/status :notstarted}]}
+  {:list/id  2
+   :list/name "Work"
+   :list/items [{:todo/id 4
+                 :todo/label "Write TPS Report"
+                 :todo/status :notstarted
+                 :todo/notes [{:note/id 4
+                               :note/content "Don't forget the cover sheet!"}]}
+                {:todo/id 5
+                 :todo/label "Send Emails"
+                 :todo/status :notstarted}
+                {:todo/id 6
+                 :todo/label "Have Meeting"
+                 :todo/status :notstarted}]}]}
 
 #+end_src
 
-We could access this note data using a nested query:
+We could access this nested note data using a nested query, like so:
 
 #+begin_src clojure
 
-[:list/name {:list/items [:todo/label {:todo/notes [:note/content]}]}]
+[{:all-items [:list/name {:list/items [:todo/label {:todo/notes [:note/content]}]}]}]
 
 #+end_src
+
+- Note the joins on {:list/items ...} and {:todo/notes ...}
 
 The result of the query would be:
 
 #+begin_src clojure
 
-[
- {:list/name "Personal"
-  :list/items [{:todo/label "Buy Milk"
-                :todo/notes [{:note/content "Maybe chocolate milk?"}
-                             {:note/content "Yes, definitely chocolate milk"}]}
-               {:todo/label "Cook Dinner"
-                :todo/notes [{:note/content "Dinner ideas: Pesto Pasta"}]}
-               {:todo/label "Mail Letter"
-                :todo/notes {} }]}
- {:list/name "Work"
-  :list/items [{:todo/label "Write TPS Report"
-                :todo/notes [{:note/content "Don't forget the cover sheet!"}]}
-               {:todo/label "Send Emails"
-                :todo/notes {} }
-               {:todo/label "Have Meeting"
-                :todo/notes {} }]}
-]
+{:all-items
+ [{:list/name "Personal"
+   :list/items [{:todo/label "Buy Milk"
+                 :todo/notes [{:note/content "Maybe chocolate milk?"}
+                              {:note/content "Yes, definitely chocolate milk"}]}
+                {:todo/label "Cook Dinner"
+                 :todo/notes [{:note/content "Dinner ideas: Pesto Pasta"}]}
+                {:todo/label "Mail Letter"
+                 :todo/notes {} }]}
+  {:list/name "Work"
+   :list/items [{:todo/label "Write TPS Report"
+                 :todo/notes [{:note/content "Don't forget the cover sheet!"}]}
+                {:todo/label "Send Emails"
+                 :todo/notes {} }
+                {:todo/label "Have Meeting"
+                 :todo/notes {} }]}]}
 
 #+end_src
 
