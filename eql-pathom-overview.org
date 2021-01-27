@@ -24,7 +24,9 @@ EQL has been compared to GraphQL and there are many similarities between the two
 
 Like GraphQL, EQL is just a specification for how to describe and query data and it needs an actual implementation to do work. Pathom is a Clojure implementation of EQL (just like Apollo is an implementation of GraphQL).
 
-It is important to note that the following examples are provided to help you understand EQL syntax but you will need an implementation (like pathom and data source) to explore EQL in the real world. Whether you will be able to perform the queries below in your real-world implementation depends on the features provided by your data source and the "resolvers" that have been setup (more on resolvers in the EQL in the real world section).
+It is important to note that the following examples are provided to help you understand EQL syntax but you will need an implementation (like Pathom and data source) to explore EQL in the real world. Whether you will be able to perform the queries below in your real-world implementation depends on the features provided by your data source and the "resolvers" that have been setup (more on resolvers in the EQL in the real world section).
+
+Also, please note that the following is geared towards beginners and at times may gloss over some of the thornier details. For the full specification and additional details please see the Resources and References section at the end of the document.
 
 * Why Use EQL vs REST?
 
@@ -180,7 +182,78 @@ Notice a couple of things about the example above:
 
 ** Nested Joins
 
-- Joins can be nested (with examples)
+If you have nested data then you can use nested joins to access that data. For example if we extended our initial sample data to include "notes" for each todo we might have something like the following:
+
+#+begin_src clojure
+
+[{:list/id  1
+  :list/name "Personal"
+  :list/items [{:todo/id 1
+                :todo/label "Buy Milk"
+                :todo/status :notstarted
+                :todo/notes [{:note/id 1
+                              :note/content "Maybe chocolate milk?"}
+                             {:note/id 2
+                              :note/content "Yes, definitely chocolate milk"}]
+                }
+               {:todo/id 2
+                :todo/label "Cook Dinner"
+                :todo/status :notstarted
+                :todo/notes [{:note/id 3
+                              :note/content "Dinner ideas: Pesto Pasta"}]
+                }
+               {:todo/id 3
+                :todo/label "Mail Letter"
+                :todo/status :notstarted}]}
+ {:list/id  2
+  :list/name "Work"
+  :list/items [{:todo/id 4
+                :todo/label "Write TPS Report"
+                :todo/status :notstarted
+                :todo/notes [{:note/id 4
+                              :note/content "Don't forget the cover sheet!"}]}
+               {:todo/id 5
+                :todo/label "Send Emails"
+                :todo/status :notstarted}
+               {:todo/id 6
+                :todo/label "Have Meeting"
+                :todo/status :notstarted}]}]
+
+#+end_src
+
+We could access this note data using a nested query:
+
+#+begin_src clojure
+
+[:list/name {:list/items [:todo/label {:todo/notes [:note/content]}]}]
+
+#+end_src
+
+The result of the query would be:
+
+#+begin_src clojure
+
+[
+ {:list/name "Personal"
+  :list/items [{:todo/label "Buy Milk"
+                :todo/notes [{:note/content "Maybe chocolate milk?"}
+                             {:note/content "Yes, definitely chocolate milk"}]}
+               {:todo/label "Cook Dinner"
+                :todo/notes [{:note/content "Dinner ideas: Pesto Pasta"}]}
+               {:todo/label "Mail Letter"
+                :todo/notes {} }]}
+ {:list/name "Work"
+  :list/items [{:todo/label "Write TPS Report"
+                :todo/notes [{:note/content "Don't forget the cover sheet!"}]}
+               {:todo/label "Send Emails"
+                :todo/notes {} }
+               {:todo/label "Have Meeting"
+                :todo/notes {} }]}
+]
+
+#+end_src
+
+As you can see, anything that is represented by nested data (or a reference, depending on your underlying database implementation) can be accessed using nested queries.
 
 * Idents
 
@@ -189,6 +262,8 @@ Notice a couple of things about the example above:
 - Example using [[:customer/id 123]]
 
 * Mutations
+
+Use mutations when you want to change data.
 
 * Other Features
 
