@@ -283,61 +283,6 @@ EQL also provides several other more advanced features:
 
 For further information on any of these advanced features we recommend you checkout the official EQL docs: https://edn-query-language.org/eql/1.0.0/specification.html
 
-* Background on Joins
-
-If you are unfamiliar with the concept of joins in SQL this section may be helpful to understand the concept. Joins in EQL are roughly equivalent to joins in SQL. Performing a join refers to linking one record's unique key in another records data. For example:
-
-Email Table
-| UserPrimaryKey | UserEmail    |
-|----------------+--------------|
-|           1001 | joe@foo.com  |
-|           1002 | bill@baz.com |
-
-UserName Table
-| UserPrimaryKey | FirstName | LastName |
-|----------------+-----------+----------|
-|           1001 | Joe       | Walsh    |
-|           1002 | Bill      | Jones    |
-
-In this simple example, if you had the "UserEmail" you could get the "FirstName" and "LastName" by doing a join on the "UserPrimaryKey" column. To be more explicit, if you had "joe@foo.com" you could do a join from the "Email" table to the "Username" table to look up the first name "Joe" and the last name "Walsh" of this user with email "joe@foo.com". This is possible because the rows in the different tables are identified by the same "UserPrimaryKey" (in this case "1001").
-
-Joins in "Entity / Attribute / Value" and graph databases work in a similar way:
-
-Let's say we convert our example data from the Getting Started section above into a "pseudo" graph database format separating the concepts of "Lists" and "Items" into their their own structures we might come up with something like this:
-
-#+BEGIN_SRC clojure
-
-{:LIST  { 1 {:list/id 1
-             :list/name "Personal"
-             :list/items [[:ITEM 1] [:ITEM 2] [:ITEM 3]]}
-          2 {:list/id  2
-             :list/name "Work"
-             :list/items [[:ITEM 4] [:ITEM 5] [:ITEM 6]]}}
- :ITEM {  1 {:item/id 1
-             :item/label "Buy Milk"
-             :item/status :notstarted}
-          2 {:item/id 2
-             :item/label "Cook Dinner"
-             :item/status :notstarted}
-          3 {:item/id 3
-             :item/label "Mail Letter"
-             :item/status :notstarted}
-          4 {:item/id 4
-             :item/label "Write TPS Report"
-             :item/status :notstarted}
-          5 {:item/id 5
-             :item/label "Send Emails"
-             :item/status :notstarted}
-          6 {:item/id 6
-             :item/label "Have Meeting"
-             :item/status :notstarted}}
-
-#+END_SRC
-
-In this case we can access the individual items in list 1 by doing a "join" from the LIST table on the ITEM table using the ITEM IDs. To be more explicit, we can see that the LIST with ID 1 refers to ITEM 1, ITEM 2 and ITEM 3 and we can get those items buy doing a join from the LIST table on the ITEM table.
-
-One of the cool things about EQL is that regardless of your datastore's underlying implementation (SQL, Datomic, REST API, etc.) you will be able to access any of your data using EQL queries.
-
 * Resources and References
 
 The official EQL docs: https://edn-query-language.org/eql/1.0.0/what-is-eql.html
