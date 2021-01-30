@@ -94,66 +94,27 @@ Notice that we use vectors to issue a query and we receive a Clojure map "{}" as
 
 It's similar to using `select-keys` to specify which fields to extract from a map. You can think of properties as "individual pieces of data" or as the "leaves" at the end of a tree of data.
 
-** Background on Joins
-
-Now that we can query for individual pieces of data, how do we ask for nested data or data that is represented by a reference. To do this in EQL we use a "join" which is represented by Clojure maps "{}". If you are already familiar with the concept of database joins from SQL or graph databases you can skip ahead to the "Joins in EQL" section.
-
-The idea of a "join" is common in relational and graph databases and it refers to linking one record's unique key in another records data. For example:
-
-Email Table
-| UserPrimaryKey | UserEmail    |
-|----------------+--------------|
-|           1001 | joe@foo.com  |
-|           1002 | bill@baz.com |
-
-UserName Table
-| UserPrimaryKey | FirstName | LastName |
-|----------------+-----------+----------|
-|           1001 | Joe       | Walsh    |
-|           1002 | Bill      | Jones    |
-
-In this simple example, if you had the "UserEmail" you could get the "FirstName" and "LastName" by doing a join on the "UserPrimaryKey" column. To be more explicit, if you had "joe@foo.com" you could do a join from the "Email" table to the "Username" table to look up the first name "Joe" and the last name "Walsh" of this user with email "joe@foo.com". This is possible because the rows in the different tables are identified by the same "UserPrimaryKey" (in this case "1001").
-
-Joins in "Entity / Attribute / Value" and graph databases work in a similar way:
-
-Let's say we convert our example data from the Getting Started section above into a "pseudo" graph database format separating the concepts of "Lists" and "Items" into their their own structures we might come up with something like this:
-
-#+BEGIN_SRC clojure
-
-{:LIST  { 1 {:list/id 1
-             :list/name "Personal"
-             :list/items [[:ITEM 1] [:ITEM 2] [:ITEM 3]]}
-          2 {:list/id  2
-             :list/name "Work"
-             :list/items [[:ITEM 4] [:ITEM 5] [:ITEM 6]]}}
- :ITEM {  1 {:item/id 1
-             :item/label "Buy Milk"
-             :item/status :notstarted}
-          2 {:item/id 2
-             :item/label "Cook Dinner"
-             :item/status :notstarted}
-          3 {:item/id 3
-             :item/label "Mail Letter"
-             :item/status :notstarted}
-          4 {:item/id 4
-             :item/label "Write TPS Report"
-             :item/status :notstarted}
-          5 {:item/id 5
-             :item/label "Send Emails"
-             :item/status :notstarted}
-          6 {:item/id 6
-             :item/label "Have Meeting"
-             :item/status :notstarted}}
-
-#+END_SRC
-
-In this case we can access the individual items in list 1 by doing a "join" from the LIST table on the ITEM table using the ITEM IDs. To be more explicit, we can see that the LIST with ID 1 refers to ITEM 1, ITEM 2 and ITEM 3 and we can get those items buy doing a join from the LIST table on the ITEM table.
-
-One of the cool things about EQL is that regardless of your datastore's underlying implementation (SQL, Datomic, REST API, etc.) you will be able to access any of your data using EQL queries.
-
 ** Joins in EQL
 
-In addition to asking for properties (i.e. the data at the "leaves" of the tree like ":user/email"), we can also easily query for nested data from our example data using the Clojure map "{}" syntax. As mentioned above, this is called a "join" and indicates that we want to query for related or "nested" data.
+As we saw in the previous section if you want the value of a property, you can simply include it in your query e.g. [:list/name] or [:person/name]. But what if the value itself is a map or sequence of maps? Including it in your query would still work:
+
+#+begin_src clojure
+
+[{:all-items [:list/name :list/items]}]
+
+{:all-items
+ [{:list/name "Personal"
+   :list/items [{:todo/id 1}
+                {:todo/id 2}
+                {:todo/id 3}]}
+  {:list/name "Work"
+   :list/items [{:todo/id 4}
+                {:todo/id 5}
+                {:todo/id 6}]}]}
+
+#+end_src
+
+But what if you only want some fields from the nested data? We know how to ask for that - with a query such as [:address/street]. To be able to associate this sub-query with the parent property, we put both in a one-element map: [:person/fname {:person/address [:address/street]}]. This is called a "join"
 
 For example, let's say that we want to query for the individual todo items from our original data structure in the "Getting Started" section. To get this data, we would use the "{}" syntax to issue a join on :list/items like so:
 
@@ -185,7 +146,7 @@ Notice a couple of things about the example above:
 
 - We used a clojure map "{}" around {:list/items ...} to query for the nested data. The map goes *before* the name of the item that you want to join on.
 - We only asked for the :todo/label in the query. That's why the result include the properties of :todo/id and :todo/status
-- The syntax for an EQL join ia a map. The map's key is the item you want to "join on" and the map's value is a vector of the properties you want in your result.
+- The syntax for an EQL join i.e. a map. The map's key is the item you want to "join on" and the map's value is a vector of the properties you want in your result.
 - Joins always take a single entry as the "key" in the map - the key is the property to join on. The value part of the join are the properties that you want in the response.
 - The value part of a join is called a "sub-query". I.e. in the join {:list/items [:todo/label :todo/status]} - "[:todo/label :todo/status]" is the sub-query.
 
@@ -266,50 +227,116 @@ As you can see, anything that is represented by nested data (or a reference, dep
 
 * Idents
 
-- Use idents when you want to restrain queries to a particular sub-set of data.
-- Examples from above
-- Example using [[:customer/id 123]]
+We've seen way to identify the data you want to see in a query by specifying properties and joins but what if you want to be able to restrict the data you receive (if you only want the todo's for a particular list for example?). In this case you could use an ident which is represented by a vector with two elements like so:
+
+#+begin_src clojure
+
+[{[:list/id 1]
+  [:list/name]}]
+
+#+end_src
+
+and the result would be:
+
+#+begin_src clojure
+
+{[:list/id 1]
+ {:list/name Clojure}}
+
+#+end_src
+
+As mentioned in the official EQL docs, it's common to use an ident as a join key to start a query for some entity, e.g.:
+
+#+begin_src clojure
+
+[{[:customer/id 123]
+  [:customer/name :customer/email]}]
+
+#+end_src
 
 * Mutations
 
-Use mutations when you want to change data.
+The other most common element of the EQL specification is a mutation which which are used to represent operations or actions e.g [(cuddle-pet! {:target :mr-fuffly})]
 
-* Other Features
+A mutation consists of a list of two elements; the first is a symbol that names the mutation and the second is the data that the mutation needs to run.
 
-- EQL also provides recursive queries, union queries, parameters, and query metadata.
-- Describe what these are and add references to official docs
+Let's say we had defined a function on our imaginary EQL server that was able to add a todo to a list we could imagine a mutation that would look something like this:
 
-* EQL in the Real World
+#+begin_src clojure
 
-As mentioned at the beginning of this tutorial, EQL is just a specification and, as such, it needs an implementation to be able to use it in a project. Pathom is the implementation of EQL used in Fulcro and while this is not a Pathom tutorial, it's useful to discuss at a high level, how Pathom implements the EQL specification.
+[(add-todo! {:list/id 1 :todo/label "Pet Fluffy" :todo/status :not-started})]
 
-Pathom Setup
-- What pieces are needed for pathom to work? ()
-- What is a resolver?
--
+#+end_src
 
-* EQL Pathom and Fulcro
+(Of course, the response from the EQL server would depend on the implementation of add-todo!, whether you have setup error reporting, etc.)
 
-Since this is a Fulcro tutorial let's switch to an example where we can explore how EQL/Pathom works in the context of Fulcro.
+Notice that the EQL transaction uses the standard vector "[]" to begin the transaction and then it uses a parenthesis "()" to indicate a mutation.
 
-We'll use the Fulcro-RAD-Demo together with the Fulcro Inspector Chrome extension.
+* Other EQL Features
 
-** Project Setup and Configuration
+EQL also provides several other more advanced features:
 
-<Jakub - ideally we would have a Fulcro app running in the page that would allow the user to install the fulcro inspector and issue queries from the EQL tab of the inspector but installing and running Fulcro-RAD-Demo is a good workaround>
+- Recursive queries: which allow you to query for items that nest recursively (e.g. folders in a file system, or todos that have sub-todos)
+- Unions: which allow you to define different sub-queries based on certain conditions which can be defined by your implementation.
+- Parameters: which allow you to provide an extra layer of information about the requested data (like if the results should be paginated etc.)
+- Query metadata: which allows you to add meta data to your queries.
 
-- Git clone repo : https://github.com/fulcrologic/fulcro-rad-demo
-- Install Fulcro Inspector : https://chrome.google.com/webstore/detail/fulcro-inspect/meeijplnfjcihnhkpanepcaffklobaal
-- Install clojure cli (brew install clojure)
-- Install npm or yarn (brew install yarn)
-- Start front-end (shadow-cljs)
-- Start backend (clojure)
+For further information on any of these advanced features we recommend you checkout the official EQL docs: https://edn-query-language.org/eql/1.0.0/specification.html
 
-** Queries from the Fulcro Inspector EQL Tab
+* Background on Joins
 
-- Connect tab using button
-- Start writing queries and see completion popup appear.
-- Issue a global query for
+If you are unfamiliar with the concept of joins in SQL this section may be helpful to understand the concept. Joins in EQL are roughly equivalent to joins in SQL. Performing a join refers to linking one record's unique key in another records data. For example:
+
+Email Table
+| UserPrimaryKey | UserEmail    |
+|----------------+--------------|
+|           1001 | joe@foo.com  |
+|           1002 | bill@baz.com |
+
+UserName Table
+| UserPrimaryKey | FirstName | LastName |
+|----------------+-----------+----------|
+|           1001 | Joe       | Walsh    |
+|           1002 | Bill      | Jones    |
+
+In this simple example, if you had the "UserEmail" you could get the "FirstName" and "LastName" by doing a join on the "UserPrimaryKey" column. To be more explicit, if you had "joe@foo.com" you could do a join from the "Email" table to the "Username" table to look up the first name "Joe" and the last name "Walsh" of this user with email "joe@foo.com". This is possible because the rows in the different tables are identified by the same "UserPrimaryKey" (in this case "1001").
+
+Joins in "Entity / Attribute / Value" and graph databases work in a similar way:
+
+Let's say we convert our example data from the Getting Started section above into a "pseudo" graph database format separating the concepts of "Lists" and "Items" into their their own structures we might come up with something like this:
+
+#+BEGIN_SRC clojure
+
+{:LIST  { 1 {:list/id 1
+             :list/name "Personal"
+             :list/items [[:ITEM 1] [:ITEM 2] [:ITEM 3]]}
+          2 {:list/id  2
+             :list/name "Work"
+             :list/items [[:ITEM 4] [:ITEM 5] [:ITEM 6]]}}
+ :ITEM {  1 {:item/id 1
+             :item/label "Buy Milk"
+             :item/status :notstarted}
+          2 {:item/id 2
+             :item/label "Cook Dinner"
+             :item/status :notstarted}
+          3 {:item/id 3
+             :item/label "Mail Letter"
+             :item/status :notstarted}
+          4 {:item/id 4
+             :item/label "Write TPS Report"
+             :item/status :notstarted}
+          5 {:item/id 5
+             :item/label "Send Emails"
+             :item/status :notstarted}
+          6 {:item/id 6
+             :item/label "Have Meeting"
+             :item/status :notstarted}}
+
+#+END_SRC
+
+In this case we can access the individual items in list 1 by doing a "join" from the LIST table on the ITEM table using the ITEM IDs. To be more explicit, we can see that the LIST with ID 1 refers to ITEM 1, ITEM 2 and ITEM 3 and we can get those items buy doing a join from the LIST table on the ITEM table.
+
+One of the cool things about EQL is that regardless of your datastore's underlying implementation (SQL, Datomic, REST API, etc.) you will be able to access any of your data using EQL queries.
 
 * Resources and References
 
