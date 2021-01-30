@@ -6,16 +6,6 @@ Understanding EQL and Pathom are the other most important skills you will need t
 
 This is a "Work in Progress" document that may be incomplete, contain errors, and be generally wrong or bad. Please use at your own risk until this warning is removed!
 
-* Notes
-
-- Focused on EQL (don't go into depth on fulcro and pathom)
-- Use a quiz-style? (present idea and quiz for other examples)
-- Static to get the base done and them make interactive
-- Create example that uses 3 levels of nesting (maybe person, friends and groups?)
-- Look at existing GraphQL tutorials for reference
-- Look at learndatalogtoday.org for reference
-- Consider a separate Pathom tutorial that takes EQL examples and expands on them.
-
 * What is EQL and Pathom?
 
 EQL is a way to query and mutate hierarchical data. It works particularly well with graph-like data (i.e. data organized in trees or connected graphs) but it can be used with many different types of data sources (datomic, SQL databases, REST APIs, GraphQL endpoints, etc).
