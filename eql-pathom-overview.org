@@ -20,7 +20,6 @@ Also, please note that the following is geared towards beginners and at times ma
 
 * Why Use EQL vs REST?
 
-<TBC>
 - EQL exists to allow different clients (e.g. web, mobile, set-top box) to request the data they need without requiring developers to create and maintain a large number of "special purpose" REST endpoints for each different client.
 - EQL allows clients to define the "shape" of the data they need on the client side without the burden of having to "munge" the data on the client once they receive it from the API endpoint.
 - EQL is a a good choice if you are writing a new application and do not have to support legacy clients written for existing REST APIs.
