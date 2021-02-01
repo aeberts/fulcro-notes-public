@@ -10,20 +10,23 @@ This is a "Work in Progress" document that may be incomplete, contain errors, an
 
 EQL is a way to query and mutate hierarchical data. It works particularly well with graph-like data (i.e. data organized in trees or connected graphs) but it can be used with many different types of data sources (datomic, SQL databases, REST APIs, GraphQL endpoints, etc).
 
-EQL has been compared to GraphQL and there are many similarities between the two technologies. EQL, however, is more clojure-centric and because it uses Extensible Data Notation (EDN) as it's data format it's a better fit for clojure applications.
+EQL has been compared to GraphQL and there are many similarities between the two technologies. EQL, however, is more clojure-centric and because it uses Extensible Data Notation (EDN) as its data format and consequently, it's a better fit for clojure applications.
 
-Like GraphQL, EQL is just a specification for how to describe and query data and it needs an actual implementation to do work. Pathom is a Clojure implementation of EQL (just like Apollo is an implementation of GraphQL).
+Like GraphQL, EQL is just a specification for how to describe and query data and so it needs an actual implementation to do work. Pathom is an implementation of EQL written in Clojure (just like Apollo is an implementation of GraphQL).
 
-It is important to note that the following examples are provided to help you understand EQL syntax but you will need an implementation (like Pathom and data source) to explore EQL in the real world. Whether you will be able to perform the queries below in your real-world implementation depends on the features provided by your data source and the "resolvers" that have been setup (more on resolvers in the EQL in the real world section).
+It is important to note that the following examples are provided to help you understand EQL syntax but you will need an implementation (like Pathom and data source) to actually explore EQL in the real world. Whether you will be able to perform the queries below in your real-world implementation depends on the features provided by your data source and the "resolvers" that have been setup.
 
-Also, please note that the following is geared towards beginners and at times may gloss over some of the thornier details. For the full specification and additional details please see the Resources and References section at the end of the document.
+Also, please note that the following is geared towards beginners and at times may gloss over some of the thornier details. For the full EQL specification please see the Resources and References section at the end of the document.
 
 * Why Use EQL vs REST?
 
-- EQL exists to allow different clients (e.g. web, mobile, set-top box) to request the data they need without requiring developers to create and maintain a large number of "special purpose" REST endpoints for each different client.
-- EQL allows clients to define the "shape" of the data they need on the client side without the burden of having to "munge" the data on the client once they receive it from the API endpoint.
-- EQL is a a good choice if you are writing a new application and do not have to support legacy clients written for existing REST APIs.
-- EQL implementation like Pathom allow clients to interactively query datasources making it easier for developers to discover and mould the data they need during development.
+EQL was created to allow different clients (e.g. web, mobile, set-top box) to request the data they need without requiring developers to create and maintain a large number of "special purpose" REST endpoints for each different client.
+
+EQL allows clients to define the "shape" of the data they need on the client side without the burden of having to re-process the data on the client once they receive it from the API endpoint. This can make EQL-based APIs more flexible than REST and may be a good choice if you are writing a new application and do not have to support legacy REST clients.
+
+EQL implementation like Pathom also allow clients to interactively query datasources making it easier for developers to discover the data they need during development.
+
+While it can be exhausting for developers to learn the profusion of new technologies being released each year, EQL provides enough compelling advantages over REST that it makes sense to invest some time to understand this new approach.
 
 * Getting Started with EQL
 
