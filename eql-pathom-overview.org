@@ -59,7 +59,7 @@ To explore EQL queries we'll need some data. Let's assume that we have a server 
 
 #+end_src
 
-One way to think about EQL queries is to imagine them as a "description of the shape of the data" that you want. Said in another way, you tell EQL what data you want and EQL tries to fill in the values. The simplest description of data is to ask for properties. Properties can be thought of as a "label" for data (or if you're familiar with dataomic it's like an "attribute"). Properties are expressed as Clojure keywords (e.g. ":todo/label"). To ask for specific properties we put them in a transaction which is represented by a Clojure vector "[]"
+One way to think about EQL queries is to imagine them as a "description of the shape of the data" that you want. Said in another way, you tell EQL what data you want and EQL tries to fill in the values. The simplest description of data is to ask for properties. Properties can be thought of as a "label" for data (or if you're familiar with datomic it's like an "attribute"). Properties are expressed as Clojure keywords (e.g. ":todo/label"). To ask for specific properties we put them in a transaction which is represented by a Clojure vector "[]"
 
 For example, to make a query on our example code that asks for the :list/id and :list/name we write:
 
@@ -103,9 +103,17 @@ As we saw in the previous section if you want the value of a property, you can s
 
 #+end_src
 
-But what if you only want some fields from the nested data? We know how to ask for that - with a query such as [:address/street]. To be able to associate this sub-query with the parent property, we put both in a one-element map: [:person/fname {:person/address [:address/street]}]. This is called a "join"
+But what if you want to specify which items you want from the "nested" data? As we saw in the previous section we can use a query such as [:list/name]. To associate this sub-query with the parent property, we put both in a one-element map, like so:
 
-For example, let's say that we want to query for the individual todo items from our original data structure in the "Getting Started" section. To get this data, we would use the "{}" syntax to issue a join on :list/items like so:
+#+begin_src clojure
+
+[:all-items {:list/items [:todo/label]}]
+
+#+end_src
+
+This is called a "join".
+
+For example, let's say that we want to query for the individual todo item labels from our original data structure in the "Getting Started" section. To get this data, we would use the "{}" syntax to issue a join on :list/items like so:
 
 #+begin_src clojure
 
@@ -134,7 +142,7 @@ For example, let's say that we want to query for the individual todo items from 
 Notice a couple of things about the example above:
 
 - We used a clojure map "{}" around {:list/items ...} to query for the nested data. The map goes *before* the name of the item that you want to join on.
-- We only asked for the :todo/label in the query. That's why the result include the properties of :todo/id and :todo/status
+- We only asked for the :todo/label in the query. That's why the result do not include the properties of :todo/id and :todo/status
 - The syntax for an EQL join i.e. a map. The map's key is the item you want to "join on" and the map's value is a vector of the properties you want in your result.
 - Joins always take a single entry as the "key" in the map - the key is the property to join on. The value part of the join are the properties that you want in the response.
 - The value part of a join is called a "sub-query". I.e. in the join {:list/items [:todo/label :todo/status]} - "[:todo/label :todo/status]" is the sub-query.
@@ -216,7 +224,7 @@ As you can see, anything that is represented by nested data (or a reference, dep
 
 * Idents
 
-We've seen way to identify the data you want to see in a query by specifying properties and joins but what if you want to be able to restrict the data you receive (if you only want the todo's for a particular list for example?). In this case you could use an ident which is represented by a vector with two elements like so:
+We've seen way to identify the data you want to see in a query by specifying properties and joins but what if you want to be able to restrict the data you receive (for example, if you only wanted the todo's for a particular list). In this case you could use an ident (short for identifier) which is represented by a vector with two elements, an ID property and it's value. You can use the ident in place of a property in a join (provided that the server is setup accordingly), like so:
 
 #+begin_src clojure
 
@@ -245,11 +253,11 @@ As mentioned in the official EQL docs, it's common to use an ident as a join key
 
 * Mutations
 
-The other most common element of the EQL specification is a mutation which which are used to represent operations or actions e.g [(cuddle-pet! {:target :mr-fuffly})]
+The other most common element of the EQL specification is a mutation which are used to represent operations or actions e.g [(cuddle-pet! {:target :mr-fluffy})]
 
 A mutation consists of a list of two elements; the first is a symbol that names the mutation and the second is the data that the mutation needs to run.
 
-Let's say we had defined a function on our imaginary EQL server that was able to add a todo to a list we could imagine a mutation that would look something like this:
+Let's say we had defined a function on our imaginary EQL server that was able to add a todo item to a list we could imagine a mutation that would look something like this:
 
 #+begin_src clojure
 
@@ -259,15 +267,15 @@ Let's say we had defined a function on our imaginary EQL server that was able to
 
 (Of course, the response from the EQL server would depend on the implementation of add-todo!, whether you have setup error reporting, etc.)
 
-Notice that the EQL transaction uses the standard vector "[]" to begin the transaction and then it uses a parenthesis "()" to indicate a mutation.
+Notice that the EQL transaction uses the standard vector "[]" to begin the transaction and then it uses a parenthesis "()" to indicate a mutation. Be aware that EQL also uses a similar parentheses syntax to indicate a parameterized query and so it's up to you to make sure that your mutation names are distinct from your property names.
 
 * Other EQL Features
 
 EQL also provides several other more advanced features:
 
-- Recursive queries: which allow you to query for items that nest recursively (e.g. folders in a file system, or todos that have sub-todos)
-- Unions: which allow you to define different sub-queries based on certain conditions which can be defined by your implementation.
-- Parameters: which allow you to provide an extra layer of information about the requested data (like if the results should be paginated etc.)
+- Recursive queries: which allow you to query for items that nest recursively (e.g. folders in a file system, or todos that have sub-todos, etc.)
+- Unions: allow you to define different sub-queries based on certain conditions which can be defined by your implementation (think: polymorphic queries)
+- Parameters: allow you to provide an extra layer of information about the requested data (like if the results should be paginated etc.)
 - Query metadata: which allows you to add meta data to your queries.
 
 For further information on any of these advanced features we recommend you checkout the official EQL docs: https://edn-query-language.org/eql/1.0.0/specification.html
