@@ -270,7 +270,7 @@ Let's say we had defined a function on our imaginary EQL server that was able to
 
 (Of course, the response from the EQL server would depend on the implementation of add-todo!, whether you have setup error reporting, etc.)
 
-Notice that the EQL transaction uses the standard vector "[]" to begin the transaction and then it uses a parenthesis "()" to indicate a mutation. Be aware that EQL also uses a similar parentheses syntax to indicate a parameterized query and so it's up to you to make sure that your mutation names are distinct from your property names.
+Notice that the EQL transaction uses the standard vector "[]" to begin the transaction and then it uses a parenthesis "()" to indicate a mutation. Be aware that EQL also uses a similar parentheses syntax to indicate a parameterized query but since mutations are always Clojure symbols it should not be a problem to figure out which is which.
 
 * Other EQL Features
 
