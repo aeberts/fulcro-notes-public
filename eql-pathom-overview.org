@@ -32,11 +32,11 @@ While it can be exhausting for developers to learn the profusion of new technolo
 
 Before diving into the details and featured of EQL, let's explore some basic EQL queries so we can get a feel for the syntax. If you are familiar with Clojure, EQL will probably look quite familiar as it uses many common Clojure data structures namely, keywords (:keyword), vectors "[]", and maps "{}".
 
-To explore EQL queries we'll need some data. Let's assume that we have a server that when asked for :all-items responds with the following:
+To explore EQL queries we'll need some data. Let's assume that we have a server that when asked for :all-lists responds with the following:
 
 #+begin_src clojure
 
-{:all-items
+{:all-lists
  [{:list/id  1
    :list/name "Personal"
    :list/items [{:todo/id 1
@@ -68,7 +68,7 @@ For example, to make a query on our example code that asks for the :list/id and 
 
 #+begin_src clojure
 
-[{:all-items [:list/id :list/name]}]
+[{:all-lists [:list/id :list/name]}]
 
 #+end_src
 
@@ -76,7 +76,7 @@ and we would receive:
 
 #+begin_src clojure
 
-{:all-items
+{:all-lists
  [{:list/id 1 :list/name "Personal"}
   {:list/id 2 :list/name "Work"}]}
 
@@ -92,9 +92,9 @@ As we saw in the previous section if you want the value of a property, you can s
 
 #+begin_src clojure
 
-[{:all-items [:list/name :list/items]}]
+[{:all-lists [:list/name :list/items]}]
 
-{:all-items
+{:all-lists
  [{:list/name "Personal"
    :list/items [{:todo/id 1}
                 {:todo/id 2}
@@ -110,7 +110,7 @@ But what if you want to specify which items you want from the "nested" data? As 
 
 #+begin_src clojure
 
-[:all-items {:list/items [:todo/label]}]
+[:all-lists {:list/items [:todo/label]}]
 
 #+end_src
 
@@ -120,7 +120,7 @@ For example, let's say that we want to query for the individual todo item labels
 
 #+begin_src clojure
 
-[{:all-items [:list/id :list/name {:list/items [:todo/label]}]}]
+[{:all-lists [:list/id :list/name {:list/items [:todo/label]}]}]
 
 #+end_src
 
@@ -128,7 +128,7 @@ For example, let's say that we want to query for the individual todo item labels
 
 #+begin_src clojure
 
-{:all-items
+{:all-lists
  [{:list/id 1
    :list/name "Personal"
    :list/items [{:todo/label "Buy Milk"
@@ -156,7 +156,7 @@ If you have nested data then you can use nested joins to access that data. For e
 
 #+begin_src clojure
 
-{:all-items
+{:all-lists
  [{:list/id  1
    :list/name "Personal"
    :list/items [{:todo/id 1
@@ -194,7 +194,7 @@ We could access this nested note data using a nested query, like so:
 
 #+begin_src clojure
 
-[{:all-items [:list/name {:list/items [:todo/label {:todo/notes [:note/content]}]}]}]
+[{:all-lists [:list/name {:list/items [:todo/label {:todo/notes [:note/content]}]}]}]
 
 #+end_src
 
@@ -204,7 +204,7 @@ The result of the query would be:
 
 #+begin_src clojure
 
-{:all-items
+{:all-lists
  [{:list/name "Personal"
    :list/items [{:todo/label "Buy Milk"
                  :todo/notes [{:note/content "Maybe chocolate milk?"}
