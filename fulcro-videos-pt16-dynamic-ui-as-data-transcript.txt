@@ -1,0 +1,74 @@
+0:01  
+In this video, I want to talk a bit about deriving kind of disconnected UI with data. So the example I'm going to use here is this top level menu. So I'm working with the version of the app where we've got routing setup, you can load the app, say, I'm going to start on the Settings screen, and it takes me the setting screen, I've got the session setup, so that if I, you know, try to go to settings, it into it sees I'm not logged in, it intends to takes me to login, and I can log in, etc. So this is where I'm at. So what I want to do is I want to change this menu so that the individual screens can add things to the menu up here. But this menu is, of course, rendered higher up in the UI tree than right, it's up here on the root component. And these sub components, you know, if they want to add or remove things from the menu, those are sort of Dom based things, they need some sort of actions. And we've seen that we don't want to put lambdas in our app state, we don't use the typical JavaScript way of saying, you know, when I click on this, here's the lambda, right, we do that at the DOM level, like with an on click. But in terms of keeping track of things in state, we want this to be pure closure data in here that we can inspect and look at etc. So the trick, really, the central trick is to remember that mutations themselves are data that can be stored in app state. So what I'm going to do is I'm going to create a component to stand for these items that I want to appear in a menu. And I think I'm actually going to create a let's create a UI package here. And then let's create a dynamic menu. namespace, let's just kind of start that way.
+
+Okay, so I really want a component called dynamic menu, and the dynamic menu is going to have dynamic menu items. And then it's going to have a constant ident. Let me go ahead and pull out a little bit in here.
+
+I'm just gonna give it a I could type just a, you know, a place an app state where it'll, it'll live always. And I'm going to give this initial state, so it'll have something dynamic menu items has no items. Okay, so then what do I want it to render, this doesn't need a key function, because there's only going to be one of them. So if you're in the in the route, what I want this essentially to render is a fragment of items. So that's, that's what the body of this thing is going to be. So this is going to be a comp fragment of whatever the items are. Okay, now, what are the items, these, these are things I want to store in AP state. So I can just invent, you know, data representations for these. So one of the things that I'm not one here is just a link. So let's say okay, I want a link, and a link is going to have a title, it's going to have a mutation to run. And it's going to have I think we can make the mutation params themselves optional.
+
+And this is just going to say, Alright, well my type is a link. And my mutation is mutation, and my mutation params. So that's one kind of thing I might want to put up there. The other thing I might want to put up there is a drop down. Right, I might want a drop down menu. And that's going to have title and then some arbitrary number of items. And so that's going to be dropped down. And then it's going to have items which is just we'll make that a veck of items. And right, so I'm just kind of building out what I might want us to look like in terms of, of straight up data. And then let's see now these items need to have These are gonna look very similar to link, I think. Because right there, they're just drop down, and I'm gonna, I'm not gonna do nested drop downs. At the moment, I'm just gonna say this is a drop down item. And a drop down item doesn't really have a type, but it does have a label,
+
+which I should have stored in all of these.
+
+Okay, so cursive call goes to the right thing, recursive call was the right thing to mutation optional params. Okay, and then make a menu that has any number of items. And so then this is just going to be a dynamic menu items with a veck of the items. Okay, so let's just kind of try out what this generally looks like by just hard coding this in here. So let's say we want a route, dynamic menu. That's going to be
+
+okay. And then we should be able to say the initial state route dynamic menu. is, right. Remember, this is a shorthand here, this is actually going to call get initial state on that guy, and put it in state. And then down here, let's comment this out for a moment. And let's say dynamic menu slash UI dynamic menu of dynamic menu. Which pure root keys dynamic menu. Okay, so we'll reload that. So we get our initial state. And of course, we should get component ID. Yeah, dynamic menu in here now, and the items are empty. So let's go over here. And just to test it real quick, we could say, Alright, I want a and well, I want the initial state to be a menu with a link a that does some mutation.
+
+And what did I do? Oh, this guy is supposed to have an argument. Okay, so now if I reload that, did I render them I did not render them. Okay, so now I need something to actually render these things. So I'm going to map Let's just be kinda simple here, type label mutation mutation params.
+
+All right, if it's a link,
+
+then I'm gonna make it DOM. IV. Oh, are they over here in route? Hey, we're dividing with the diff content.
+
+Sure, I've got my state here. Dynamic. menu items is a vector individual items have Type link, and they have a label.
+
+For the moment, I'm just gonna do both types of entries in the same. Oh, did I pass my
+
+I did my initial state has the initial state. I'm logged in. So at this point, I would expect things to be rendering. So when logged in, under the dynamic menu, which renders the fragment, oh, helps if we actually put the items in the, there we go. And now on a link, if I say,
+
+Okay, now I'm gonna say list here, because I want to use the literal mutation as a symbol inside of a list, followed by the optional mutation params. I don't think there's somebody could explicitly set them to nil. So I don't want to pass nil there. Now you can see if I go over here in the console, and clear this up, I can click on a or b, and you see it's trying to run the mutation, I've told it, even though I've not put that mutation in anywhere. So hopefully, you can see, you know, pretty quickly, I can throw together something he grabbed these three requires and bring them over here. Let's change.
+
+Let's make a drop down called reports. And inside reports, drop down item, sales,
+
+whatever, some, something like that. So then if it's not a link, it must be a drop down. And so if it's a drop down,
+
+and these are just all I'm doing here is duplicating, essentially what semantic UI react wants. So I make a drop down with item true. This is this means item true. And JSX. Or item is equal to something text gets the label I want on the menu itself. And I'm trying to make one of these. And then I make a drop down menu that contains drop down items. And in my wrappers for semantic UI that just those get pulled out that way. And then I can directly do them this way. So I need a drop down menu. And then you always need props for the semantic UI wrappers so that I can see the UI drop down item, and it needs no props. And then the drop down item.
+
+Let's go and make that function so we can D structure. So this is over the items. Yeah, it's just items. Well, we could just say items, and D structure it.
+
+And so then the item, it gets the label.
+
+Right, we could pull the label out that way.
+
+Reload. And now I have something that's rendering those out. And then of course, on the drop down items, I should be able to do the same sort of thing. Right, so drop down item As a label, it has a mutation. mutation params Oh, sorry, listen doesn't need a type, just label mutation mutation brams.
+
+spelling, right. So this is the same thing as what I had here.
+
+It's not clear that it's trying to show the sales report, trying to show the attendance report. So you can see, I can very quickly come up with this, this thing that I can now embed in the root of my app, and have it represent, you know, some particular menu. Now, I might want the sort of kind of routing concerns. And the way I've done these, at the moment is with pushing, but I also have this this route to mutation I can call to take me to a particular path. Oh, and that's just pushing set token. So I'm going to have to tinker a little bit there. Well, I guess I can call that from mutation. So in my, in my dynamic menu, or somewhere else, maybe in routing, right, I could define a mutation just for your tation purposes.
+
+I can pretty much avoid in here, because I'm just gonna do this side effecting top level thing, but now I have an app routing route to mutation.
+
+Okay, it's no go back to saying I want home and settings. Then I want
+
+the route to mutation. And what did I say I want it on that route string.
+
+A bell to reconstruct working routing system along with some additional drop downs. So now that I've got this basic system, Well, the first thing I can do is I can say, you know what, I don't really want initial state coded here and less someone actually tries to use it, in which case I don't know what the menu item should be. And so then over in my client, my initial state for the dynamic venue
+
+think that was it? Yeah.
+
+And I can no longer use I can't mix the two
+
+All right, so now should be back to where I started at the beginning of the video, I've got a menu. Okay, so now I can do fun things like, well, maybe the settings screen. When I go there, it wants to set a different menu or perhaps add to the menu. And of course, there's a bit more, you know, interesting kind of coding kinds of things I could do here. But let's say, oops,
+
+we could actually, we could do all sorts of things, but let's just do it this way.
+
+All right. So all we have to do to set our menu now. Oops.
+
+is put it in state?
+
+Oh, wait. No, we're going to pass the actual menu. And so if I associate that guy into the correct place, and say that the dynamic menu has, Oh, actually, I can just say, the dynamic menu items has changed. That's, that's a query prop. Now, over here in the client, I could do things like,
+
+oh, and I probably should not put a bang on that one, because it's a mutation. So it doesn't actually side effect. System side effects when it uses it, but here, it doesn't side effect. And so I could grab this menu. Again, this is where
+
+I can have this, this dynamic thing happen, where additional menu items can show up. So this is just an example of, you know, if you go and look now at the component by D, the dynamic menu, you can see that these individual items are just storing, you know, the symbol to the mutation and the parameters to pass the mutation. And I can just assemble those into the actual code of, of that component itself. So this is a way of driving kind of remote UI through data. And this primarily relies on the fact that you know, what to render based on the data. So there's some sort of dispatch, right? This could be a multi method, this could be an if statement, a case statement, whatever, whatever kind of works for this particular kind of thing. And of course, we could expand this example to be a lot more interesting by having kind of a fixed set of menu items, and then maybe something that's dynamic after it a couple of different ways we could do that. I'm sure you can, can take them for example, we could hard code these as items and then have the fragment diag dynamic menu show, kind of to the right of those and be coded separately from those. Or we could have some, you know, setting and dynamic menu that's like the base set that always shows etc. But the primary concept is just how simple it is to to code up the like this that are pure data that then end up affecting your your UI end in whatever way you want.
+
+Transcribed by https://otter.ai
