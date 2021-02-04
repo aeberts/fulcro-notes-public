@@ -153,7 +153,7 @@ https://youtu.be/H2XY5kdcjGU?t=2270
 ** Attributes
 https://youtu.be/H2XY5kdcjGU?t=2317
 
-- Attributes basic setup
+- Basic setup of attributes
 - Create a model.cljc file at the same level as client.cljc and ui.cljc
 - Create def for all-attributes that includes the all-attributes from each model
 - In each model namespace create a (def attributes ...) that includes the
