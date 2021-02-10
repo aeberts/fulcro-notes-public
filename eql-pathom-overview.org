@@ -2,7 +2,7 @@ Author: Alex Eberts (https://github.com/aeberts)
 
 #+TITLE: Eql Pathom Overview
 
-Understanding EQL and Pathom are the other most important skills you will need to understand when starting out with Fulcro.
+Understanding EQL and Pathom are one of the most important skills you will need to understand when starting out with Fulcro. This guide will give you an overview of the EQL syntax and how it's used in some common situations.
 
 * What is EQL and Pathom?
 
