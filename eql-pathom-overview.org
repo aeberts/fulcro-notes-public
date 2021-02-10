@@ -8,13 +8,13 @@ Understanding EQL and Pathom are one of the most important skills you will need 
 
 EQL is a way to query and mutate hierarchical data. It works particularly well with graph-like data (i.e. data organized in trees or connected graphs) but it can be used with many different types of data sources (datomic, SQL databases, REST APIs, GraphQL endpoints, etc).
 
-EQL has been compared to GraphQL and there are many similarities between the two technologies. EQL, however, is more clojure-centric and because it uses Extensible Data Notation (EDN) as its data format and consequently, it's a better fit for clojure applications.
+EQL has been compared to GraphQL and there are many similarities between the two technologies. EQL, however, is more clojure-centric; it uses Extensible Data Notation (EDN) as its data format and so it may be a more "natural" fit for clojure applications.
 
 Like GraphQL, EQL is just a specification for how to describe and query data and so it needs an actual implementation to do work. Pathom is an implementation of EQL written in Clojure (just like Apollo is an implementation of GraphQL).
 
-It is important to note that the following examples are provided to help you understand EQL syntax but you will need an implementation (like Pathom and data source) to actually explore EQL in the real world. Whether you will be able to perform the queries below in your real-world implementation depends on the features provided by your data source and the "resolvers" that have been setup.
+It is important to note that the following examples are provided to help you understand EQL syntax but you will need an implementation (like Pathom and data source) to actually explore EQL in the real world. Whether you will be able to perform the queries below in your real-world implementation depends on the features provided by your data source and the "resolvers" that have been setup. 
 
-Also, please note that the following is geared towards beginners and at times may gloss over some of the thornier details. For the full EQL specification please see the Resources and References section at the end of the document.
+Also, please note that the following is geared towards beginner EQL users and, at times, may "gloss over" some of the thornier details. For the full EQL specification please see the Resources and References section at the end of the document.
 
 * Why Use EQL vs REST?
 
@@ -26,11 +26,13 @@ EQL implementation like Pathom also allow clients to interactively query datasou
 
 While it can be exhausting for developers to learn the profusion of new technologies being released each year, EQL provides enough compelling advantages over REST that it makes sense to invest some time to understand this new approach.
 
+EQL is the query language used by Fulcro components to query for the data they need so if you're developing apps using Fulcro, understanding EQL is a must.
+
 * Getting Started with EQL
 
 Before diving into the details and featured of EQL, let's explore some basic EQL queries so we can get a feel for the syntax. If you are familiar with Clojure, EQL will probably look quite familiar as it uses many common Clojure data structures namely, keywords (:keyword), vectors "[]", and maps "{}".
 
-To explore EQL queries we'll need some data. Let's assume that we have a server that when asked for :all-lists responds with the following:
+To explore EQL queries we'll need some data. As mentioned above, EQL is just a specification and so in the real world you'll need to setup Pathom and a datasource to play with EQL which is outside the scope of this guide. For now, let's just assume that we have a Pathom server configured that when asked for ":all-lists" responds with the following:
 
 #+begin_src clojure
 
@@ -60,7 +62,9 @@ To explore EQL queries we'll need some data. Let's assume that we have a server 
 
 #+end_src
 
-One way to think about EQL queries is to imagine them as a "description of the shape of the data" that you want. Said in another way, you tell EQL what data you want and EQL tries to fill in the values. The simplest description of data is to ask for properties. Properties can be thought of as a "label" for data (or if you're familiar with datomic it's like an "attribute"). Properties are expressed as Clojure keywords (e.g. ":todo/label"). To ask for specific properties we put them in a transaction which is represented by a Clojure vector "[]"
+* Introduction to EQL Queries
+
+One way to think about EQL queries is to imagine them as a "description of the shape of the data" that you want. Said in another way, you tell EQL what data you want and EQL tries to "fill in the values" for you. The simplest description of data is to ask for properties. Properties can be thought of as a "label" for data (or if you're familiar with datomic it's like an "attribute"). Properties are expressed as Clojure keywords (e.g. ":todo/label"). To ask for specific properties we put them in a transaction which is represented by a Clojure vector "[]"
 
 For example, to make a query on our example code that asks for the :list/id and :list/name we write:
 
@@ -82,7 +86,9 @@ and we would receive:
 
 Notice that we use vectors to issue a query and we receive a Clojure map "{}" as the result. In this result map, the properties appear as the map keys and the query results appear as the map values. To be more explicit, ":list/id" is a property (a keyword) and "1" is the query result (a value).
 
-It's similar to using `select-keys` to specify which fields to extract from a map. You can think of properties as "individual pieces of data" or as the "leaves" at the end of a tree of data.
+This is similar to using `select-keys` to specify which fields to extract from a map. You can think of properties as "individual pieces of data" or as the "leaves" at the end of a tree of data.
+
+You've probably noticed that we haven't talked about the "[{:all-lists ..." part at the beginning of the query. This is called a "join" and we'll explore what it is and how it works in the next section.
 
 ** Joins in EQL
 
@@ -108,7 +114,7 @@ But what if you want to specify which items you want from the "nested" data? As 
 
 #+begin_src clojure
 
-[:all-lists {:list/items [:todo/label]}]
+[{:all-lists {:list/items [:todo/label]}}]
 
 #+end_src
 
@@ -145,7 +151,7 @@ Notice a couple of things about the example above:
 - We used a clojure map "{}" around {:list/items ...} to query for the nested data. The map goes *before* the name of the item that you want to join on.
 - We only asked for the :todo/label in the query. That's why the result do not include the properties of :todo/id and :todo/status
 - The syntax for an EQL join i.e. a map. The map's key is the item you want to "join on" and the map's value is a vector of the properties you want in your result.
-- Joins always take a single entry as the "key" in the map - the key is the property to join on. The value part of the join are the properties that you want in the response.
+- Joins always take a single entry as the "key" in the map - the key is the property to "join on". The value part of the join are the properties that you want in the response.
 - The value part of a join is called a "sub-query". I.e. in the join {:list/items [:todo/label :todo/status]} - "[:todo/label :todo/status]" is the sub-query.
 
 ** Nested Joins
@@ -196,7 +202,7 @@ We could access this nested note data using a nested query, like so:
 
 #+end_src
 
-- Note the joins on {:list/items ...} and {:todo/notes ...}
+- Note the nested joins on {:list/items ...} and {:todo/notes ...}
 
 The result of the query would be:
 
@@ -225,16 +231,21 @@ As you can see, anything that is represented by nested data (or a reference, dep
 
 * Idents
 
-We've seen way to identify the data you want to see in a query by specifying properties and joins but what if you want to be able to restrict the data you receive (for example, if you only wanted the todo's for a particular list). In this case you could use an ident (short for identifier) which is represented by a vector with two elements, an ID property and it's value. You can use the ident in place of a property in a join (provided that the server is setup accordingly), like so:
+We've seen way to identify the data you want to see in a query by specifying properties and joins but what if you want to be able to restrict the data you receive (for example, if you only wanted the todo's for a particular list). In this case you could use an ident (short for identifier) which is represented by a vector with two elements - an ID property and it's value. You can use the ident in place of a property in a join (provided that the server is setup accordingly), like so:
 
 #+begin_src clojure
 
-[{[:list/id 1]
-  [:list/name]}]
+[{[:list/id 1] [:list/name]}]
 
 #+end_src
 
-and the result would be:
+Notice a couple of things about this ident
+
+- The ident's property is :list/id and the ident's value is "1".
+- The properties that we want to see in the query are put into the second vector (in the above example we only have [:list/name])
+- We "join on" the ident which is why we need the leading "{" i.e.: [{[:property value] [property]}]
+
+The result of this query would be:
 
 #+begin_src clojure
 
@@ -262,7 +273,7 @@ Let's say we had defined a function on our imaginary EQL server that was able to
 
 #+begin_src clojure
 
-[(add-todo! {:list/id 1 :todo/label "Pet Fluffy" :todo/status :not-started})]
+[(add-todo! {:list/id 1 :todo/label "Pet Mr. Fluffy" :todo/status :not-started})]
 
 #+end_src
 
