@@ -1,0 +1,343 @@
+0:02  
+So once you start working with an app of any size, you typically need some sort of routing.
+
+0:08  
+And you also typically need some sort of user login. So in this video, we'll talk through how this is typically done in full grow, and
+
+0:18  
+basically how to structure sessions etc. This won't be in great depth in terms of things like security issues and such. There are certainly best practices that go well beyond what I'm going to discuss here. But this will get you started with the full grasp.
+
+0:35  
+So in this application, I've taken our pieces out from the prior videos, and I've put in
+
+0:42  
+some other things, we want to be able to go between screens, we'd like to log out, we'd like to log in, when we log in the menus, enable, when we're logged out, there are no menus. That's that's basically what we want. And then if we are logged in, and we were to go to that URL, we'd like it to go to the right place.
+
+1:08  
+Right. So with a single page application, this involves using the HTML five routing API, and making sure that changes to this, right, so I can move around here, and then I can start using the Back button. And that just moves me forward and backwards through the application, HTML routing history. And I want that to join together somehow with my UI routing. So I'm not actually doing anything besides just telling folks to render a different screen.
+
+1:38  
+So that's what we're setting up. So let's take a look at the pieces. The first thing I needed to do was change some of the server side things. So let's go look at that.
+
+1:53  
+The big change here, it's not a very big change is instead of using the full Chrome's built in wrap API, which is a simple convenience wrapper, I'm instead using handle API request directly which wrap API and API middleware calls for you. But the reason I'm doing that is so I can modify the parsing environment. So I've got my parallel parser here.
+
+2:16  
+And this is actually a function of an arbitrary environment that gets passed to your mutations and resolvers.
+
+2:24  
+And the query you want to process. So handle API request takes the query you want to process and then a function that can process that query. And then it does the various wrapping and unwrapping of things to to make things happen. And so what I'd like to do is I'd like to include the ring request in my parser environment, so that in my resolvers, I can look at the return request. That's important to me, because I'm going to use ring session, and it places the session information in the ring request. And if I can't see it in my resolvers, I can't tell if my users logged in. So that's that's one important piece right here.
+
+3:02  
+The next important piece is I need to add a piece of middleware that will rewrite the request to ask for index dot HTML, if the route isn't like a resource. So basically, this all this function does is look at the car and say, all right, well, if it's not slash API, which is where all of our API requests go, and it's not one of these, like CSS, or JavaScript source maps, or CSS source maps, or JPEG, PNG, right, you just list out the various things that should be handled by the rest of the ring stack.
+
+3:35  
+So if it's any one of those, then let the rest of the ring stack handle it. Otherwise rewrite the request to slash index dot HTML. And so that then walks index HTML through the rest of the stages if that's what the user is asked for. So if I give any gobbledygook here, I'll get the index HTML page. And then I can deal with it from there logically.
+
+3:57  
+So that's the important service, I'd have to make the server serve the same index that HTML file. And I changed how the client starts, I had to restructure the client application in several ways.
+
+4:11  
+So if we go and look at shadow cljs, there used to be an actual entry point here in this modules main entry. If you go back and look, well, actually, I can show you the diff right here. There used to be an init function here that was called and that allowed shadow to figure out from there what code to compile into the application. I don't want Chateau explicitly calling that function anymore. Actually, I could have just changed this in a different way. I could have just changed this to a different function start.
+
+4:42  
+I basically needed a function for afterload and a function for for startup. It's actually now that I think about that that's, that's really
+
+4:52  
+a better way to go about it.
+
+4:57  
+I'm gonna do that and then I won't have to do my stupid change.
+
+5:00  
+My index HTML file which was to explicitly call start.
+
+5:08  
+And so in app client,
+
+5:11  
+I've defined a refresh function and the start function. And the refresh function just calls mount to force hot code reload to re render the app. And start does some various initializing things. I needed to move these initializing things into here, because my routing is kind of a global concern. And it was going to lead to circular references in my closure file. So I wanted my application to be a leaf of my required graphs. So I put the application all by itself in its own namespace. with just the remote, the client did mount stuff that I had needed to use things like UI classes from other places, and that would have caused, like I said, circular references as as I build things out. So I've restructured it so that that's the startup sequence now, so shadow clgs, let's
+
+6:00  
+make sure that works. Yeah,
+
+6:03  
+let's actually open the console. So we get rid of caching and make sure it works. Okay. So
+
+6:12  
+that's the changes to the server. So we get index HTML for basically any thing the browser actually asked the server for. And then on the client side, I set up hot code reload, so it wouldn't run
+
+6:26  
+these steps every time.
+
+6:28  
+But that these could be run by shadow during its build.
+
+6:34  
+Okay, so next up,
+
+6:41  
+the next thing I did was started thinking about how the session itself should be structured. And so I went and made a session model enclosure, I made a little user database
+
+6:51  
+and put some user information in here.
+
+6:54  
+Then I define some resolvers. So I can query for a user by ID, that's just the same as what you've seen in in earlier videos. Notice, I'm purposely eliding, the password here, I'm not just doing a blind to get from that map. So don't send passwords across the network in reverse. So people can just ask me, Hey, what's user ID 1's password.
+
+7:13  
+current-user-resolver is going to use the ring session middleware to find out if somebody's already logged in. So we'll talk about that here in just a second. In fact, I should go back and show you in the server, I added wrap session. And you can look at the documentation for ring if you don't know what this does. But this basically just auto sets a cookie on the browser called ring session.
+
+7:45  
+And then it it tracks a map of data against that cookie. And so you can augment that map over time. And of course, the map is stored on the server, and the clients just saying, here's who I am with this UID. And then you can look up on the server. What that means. So typical session management.
+
+8:06  
+Alright, so I've got my model here. So current-user-resolver, is basically going to look in the ring session. And I'm going to store basically user there. So there's gonna be user ID and an email. And if there's something in there, then I'm going to return current session user with that, Id email and valid true otherwise, I'm gonna say yes, nobody. And that's not a valid user.
+
+8:31  
+So now if I go over to my inspect query panel, and I say, give me a join on,
+
+8:40  
+oh, we load the index, they'll have autocomplete.
+
+8:50  
+I don't know why sometimes that doesn't want to hook up.
+
+9:02  
+All right. So that's what that's what that resolvers doing.
+
+9:06  
+And then, I've got a login mutation where you give an email and password, it tries to look up the email, I put a sleep in here just to let you see UI dynamic dynamics.
+
+9:17  
+looks up the user by email compares the password. If that works out, then I'm using this function. This is part of the API middleware. And augment response takes the response you want to send back to the client. And then it also takes a function that later on will be given the response that's going to actually walk through the ring stack where you can augment it. So the ring middleware for sessions requires that you stick a session key into the ring response as it goes through or modify, right really, what I should do here is probably, you know, update
+
+9:52  
+in the ring response at session, current user or something, but I'm being I'm being hoggy and I'm saying the session just belongs to who you are, and nothing else can go on there, basically.
+
+10:04  
+So I'm putting the the code subject, which is basically what I found in the user database into my server side ring map associated with that, that cookie key that I was showing you just a second ago.
+
+10:19  
+And then if that didn't work out, I send back just user valid false.
+
+10:26  
+Okay, and then log out. Obviously, from the server's perspective, all I need to do is augment some response, this could be an empty map, and I think the client is currently caring what the logout returns. But I want this, this augment function that can then change the session to an empty thing, I could also do some steps to, you know, rewrite the cookie and just like discard the cookie and etc, etc. But this is less This is at least telling the server forget who that particular cookie went with. Ideally, in a secure world, you'd probably also forced a cookie to somebody value, but I'm not gonna worry about that for for this simple example.
+
+11:03  
+Okay, so then the clojurescript side, well, that's gonna get a little hairy let's, let's talk about the UI here. But let's jump to routing. That's the more interesting thing for the moment. So Fulcro includes a relatively new router,
+
+11:20  
+in the dynamic routing namespace, it's got its own macro, defrouter, that looks very much like defsc. In fact, it works almost identically, except it writes the query in the ident and the initial state for you all you have to do is supply
+
+11:36  
+an extra key router targets and list out the things that this thing should show. Basically, I'm going to show a login form or the home screen or the setting screen, and then go through and make those components. Now the one constraint with these is these do have to be stateful components with an identity query. The reason for that is the way the dynamic router works is it actually leverages the query and idents in app state, and, and in the query of the main router itself, to move things around. So that's requirement, they should all have initial state, they should all have an ident, they should all have a query, if you don't give them an initial state, things won't hook up, right. So that's an important thing that is an easy make mistake to make in Fulcro. In general, if it's supposed to be there, on the first frame, make sure it has at least an empty map of initial state.
+
+12:28  
+Or you may not get what you expect on the screen or in state.
+
+12:34  
+Okay, so to use this router, it's actually pretty simple. The first thing you've got to do is specify in each of the router targets, at minimum, a route segment key. And the route segment key is just a vector of path elements. So in the case of login, the path element is login. If I had something like, you know, settings, blah, boo, then yeah, and I wanted, and I wanted that. Okay.
+
+13:12  
+I can, I can see, I think I said, blah, blah, boo. That's what I would put in the route segment if I wanted that particular path to correlate with this guy. Now, that's not an actual automatic correlation. But it's an easy correlation. So So essentially, what I'm going to have to do is hook up my event
+
+13:32  
+handler that's going to see these route changes to split on slashes and then throw the first empty
+
+13:39  
+thing away. And that will be the route segment. So you can read more in the documentation about how this this works. But this basically just lets you declaratively say, or pretend like okay, main router, that's my initial slash, and then home or settings, okay, that's the thing that goes right after the slash,
+
+13:59  
+etc.
+
+14:01  
+So that's,
+
+14:04  
+that's the next thing you have to set up. And then you need to place it into,
+
+14:10  
+you know, your tree, just like you would any other component, you make a factory for it, you make a join, to the main main router, you pull the props out, and then you render it with factory. That's, that's really all there is to getting it hooked into the UI. And then for routing,
+
+14:29  
+there's essentially a change route function, where you can give it
+
+14:35  
+say, the app, and then
+
+14:39  
+a vector that corresponds to the entire route that you want to go to. So in this case, I might want to go to the settings route, and that would take me to this extra.
+
+14:49  
+Now that doesn't change the URL. That's just about changing the app state of fulcrum. So there's a bit more to do to get the entire routing
+
+15:00  
+working the way we'd like.
+
+15:03  
+So let me log in first, and then show you
+
+15:07  
+a little bit of the piece, let's ignore how login actually works fully. And let's look at the routing part. So I've gone up here and I've added app initialization. I've initialized the routing system. So dir is my dynamic router namespace that I showed you just a second ago. That's, that's part of our group.
+
+15:27  
+It turns out that the dynamic routers use UI state machines, which I'll talk about in a later video, to keep track of things like deferred routes that are based on IO.
+
+15:38  
+So you have to initialize the routing system. So they can go through and put all of those routers into app state correctly.
+
+15:46  
+This routing start function that I've done is something I wrote in this application, it's in this routing namespace. And this is where I'm doing my html5 stuff. So I'm using a library pushy, which is a closure script library. And it basically hooks into the html5 event system for me, and then it will send me essentially events.
+
+16:09  
+And I'm using identity here for my, my, my path matters. So basically, it takes two arguments, a function to actually make the route go and a function to recognize the route and split it into pieces and parameters, and so on, so forth. So I was a little lazy here, and just said, I'm going to do that inside of this function. So what I'm going to get for P, is likely in this example would be slash home, is what I would see coming in here. And so I'm going to split that on slash, that's going to give me a vector with an empty string followed by a whole minute, I'm going to drop the first part of that. So I just have a, I'm sorry, a sequence with home in it. And I'm going to turn that into a vector.
+
+16:52  
+I'm going to spy on that so I can see it in the console.
+
+16:56  
+So you can see those those printing out segment settings home settings home. And then I'm going to call that change route function I just told you about with that vector. And that's really all there is to it.
+
+17:08  
+And that gets that gets my my routing working
+
+17:11  
+both with the UI. And
+
+17:14  
+in here, if you go look at the the code for these links, these are actual h refs, because I'm using html5
+
+17:22  
+routing ours my menu, here it is. So these are just playing a tags with h refs that are just changing the UI. And then pushy through html5 events is picking that up. And of course, not got my event handling as well. So that's relatively easy to get going.
+
+17:43  
+Alright.
+
+17:45  
+Now in terms of login, I've got a lot of features here. And I'm going to run through them. And the intention is to show you how much complexity there is around the rest of this. As far as the UI goes. And, you know, I feel like
+
+18:01  
+it's not just a there is inherent complexity here is I guess, what I'm what I'm trying to indicate. And I'm leading towards a future video on UI state machines to show you how this stuff that gets peppered all over the place trying to handle this this concern of Okay, I'm coming to the website, a new I am I already logged in, and I'm not logged in, if I am already logged in, am I trying to a specific page, if I'm not logged in, and I was trying to go to a specific page, and then I log in? Do I get redirected to the place I originally wanted to go, right? There's a whole lot of stuff going on there. And that's where things start to get.
+
+18:43  
+In a situation where you you'd really kind of like to have a state machine, you'd like to say, Okay, let's, let's start here. And then here are the possible avenues I could go down and have that written out in a way that's that's easy to reason about. But I'm not doing that in this one that was too much information to shove at you all at once in one video. In fact, I feel like I'm pushing the limits on on just what I've got in here.
+
+19:07  
+Okay, so we've got the routing.
+
+19:10  
+And so now let's look a little bit further at this session. So I'm doing something relatively straightforward. At start, I'm loading via those resolvers I just showed you, and via this current user class into this current user class, just has a query for user ID email invalid. And it has an initial state where you know, I kind of preset some things. Now note here, I did not give this component an ident. And I did that intentionally. And this is some something you sometimes will want to do. Sometimes there really is only one thing in app state. And there really makes no sense to normalize it because normalizing it then just makes you kind of have to denormalize it and work with the denormalized data
+
+19:53  
+in your mutations. And so it just makes things a little more complicated. For no benefit, right. If there were
+
+20:00  
+You know many of these things, then I might normalize it. But in the case of of current user, this is account information, there's probably only going to ever be one thing associated in this app state at all related to that. So I just want it to be at the root of the app state where it's really easy to look at really easy to write my UI against. So that's why I didn't normalize it.
+
+20:23  
+And basically, I'm just looking to see, well, if it's valid, I'm going to show a logout link. And if it's not valid, I'm going to show a login link. And so that's this control in this upper right hand corner.
+
+20:36  
+That's what's going on there. But that's also the thing that I'm using in my initial load
+
+20:41  
+to to pull the thing down. So when I first start here,
+
+20:46  
+it's gonna hit reload, pop over to Volker inspect, look at the network, you see, there's a query that goes out for a session current user, it asked for these pieces of data. And the server responds with, yeah, I know that person via this cookie, it's user ID one, there's their email, true. Things update very nicely. And I, I'm where I want to be.
+
+21:09  
+Also note that because the routing, this is already solved, so the the history when this starts, push, you will call this function with whatever you are I is here, which will cause me to do a change route. And so coming into settings automatically pushes me to Settings. Now, I don't want that to happen when I'm logged out. So at the moment, you're gonna see what happens is I tried to go to settings,
+
+21:37  
+it takes me to Settings very briefly, I don't know if you can see the flicker in the video there, and then redirects to login. So I get a little bit of a flicker there. That's not necessarily desirable either. So right, there's a little bit more management here, I'm going to have to deal with in terms of a little bit more complexity. And again, this isn't really a full grow concern, this is just how do you want it to behave? It just happens to have a lot of different things going on.
+
+22:04  
+Okay, so let's go back to this load. So the load loads, it may or may not get a valid user. And in this case, if I look at the network transactions that happened, I get back user nobody. And that's not a valid user. Okay, so I can render based on that.
+
+22:23  
+Now, I'm using the post mutation mechanism of load to kind of trigger on the next behavior. So I'm loading that session. And as I'm loading from the current session, as soon as that's done, I'm going to this finish login mutation. And what this is doing is it's looking at app state at current user valid. So this right here is what I was talking about what that valid with the normalization, right, I didn't normalize current user. And so it's just a map right here, at the current username, level, I don't have to walk into a table and then a table entry, there is only one current user, so I just stuck it here. And that makes this a little less complicated. If I had normalized it, then I would have had to read the ident at that session, current user and then followed the ident through state. So this was a two step process.
+
+23:08  
+Okay, so I found that if I'm logged in, if I am logged in, I'm using this helper function I wrote called route to and what route two does is it just does push reset token. It's just, I just put it here because I need this history object. And,
+
+23:22  
+and the route string. And I already had the history object. So this just makes this a nice global function where I don't have to think about what is essentially a global thing, there is only one Singleton history in the browser. And this accesses it. So carrying this around notationally. In the rest of my program seems like overhead, just route to login. That's sort of like window dot location goes to slash login, but in a nice way.
+
+23:48  
+Okay, so if I'm not logged in route, login, if I am logged in, set route ready to true, so this little trick that I'm doing here,
+
+23:57  
+and I didn't need to do multiple steps here. So I didn't need to make it that point that ugly, is I'm trying to do a little bit of
+
+24:11  
+flicker prevention. So I'm basically saying if if ready is false,
+
+24:18  
+then don't bother rendering the route yet. Right? We haven't even we haven't even gotten to a point where we know if they're logged in yet. And so there's no point in in showing things yet. If that's the case.
+
+24:30  
+And I'm doing that no matter what, right. So when I'm not logged in, I'm routing. But no matter what I'm setting the route ready flag to true, so that I can start displaying the main part of the UI. So some trick like that, and you know, you can add some transitions and animations and whatever you want to add. But some trick like that is usually kind of handy when you're trying to get the single page app going. Given that you have to show something on the first frame, having some sort of thing that switches you maybe between the the you know, maybe a load
+
+25:00  
+screen or whatever into here's the application. And it's in a, it's in the, quote, good state for what you're trying to do.
+
+25:13  
+Okay, so back to the UI.
+
+25:16  
+Alright, so the login takes me to finish login. I'm here, I'm going to login screen. Now, there's a whole sequence of things that could happen here, right? They could type in bad credentials, bad credentials could show me an error message, they could type in good credentials, and the good credentials could take me to the home screen. So let's walk through how how that that whole mess works.
+
+25:40  
+So the login form, I did not use form state, I don't think form states really necessary here, I don't need reset, I don't need a diff for the server. So don't abuse form, form state support. Anytime you have a form, in this particular case, it's perfectly acceptable for me just to track email password and whether or not
+
+25:58  
+I want to show that there's an error or whether or not I want to show that things are busy. So remember, we're in pure rendering, I've given this a route segment, I've given this initial state, and then it's just basically Alright, well, the form should have the error class when there's an error. And the input should be disabled when it's busy. All right, that's all nice and declarative. on key down, this is a, I do have a bunch of helpers in this event namespace for detecting different kinds of keys without you having to go look up the key code on the internet. So
+
+26:33  
+so on key down, if it's an Enter key, then login.
+
+26:37  
+And then if it's your press the login button, that guy should show that it's loading when it's busy. And on clicking to try login. So just exactly what you would expect the the UI to be. It's very declarative. And this login mutation is really the, the the abstraction that I'm interested in when I'm doing this. So when I press login, you see, I get a couple of set props as I changed the, the password to the wrong thing. And then a login mutation with the data. And then a response from the server. Oops, sorry, that's the transaction was locally response from the server.
+
+27:17  
+That No, that's not a that's not a valid user.
+
+27:21  
+Okay, so let's look at this login mutation, because this is kind of the meat of the whole thing. As long as mutations using several pieces of the mutation system, it's using the optimistic action to change the the busy flag on the login form. So I just did this abstractly show login busy true, just uses the state map thing to say, okay, go to component, login, busy flag and set it to either true or false based on what you want to do. So then, in here, I can say swap state show login busy. Same thing with the error flag, show error. So it makes makes the mutation a lot more readable.
+
+28:00  
+When you when you do things like composition and such.
+
+28:03  
+And just you don't have to look at this big vector of where is it normalized in the database, you need to know that at some point, but typically, you can localize these things to some particular components concern, maybe put them in that components file with that component. And then when you define mutations, you can just work based on these helpers instead of having to remember, you know, what I didn't you gave them.
+
+28:27  
+Okay, so the optimistic action makes it makes the busy thing happen. And I put a delay on the server. So we could see that, you know, that spinner thing happened. That's just this show login busy, true and show login busy false error action, I didn't really talk too much about this. This is actually the interpretation of errors is pluggable. In Volker three, you can, you can say, what, what means there was an error. By default, it's the server actually threw an exception that caused a hard, like 400 or whatever, like a non 200 status code. So you actually very rarely, in the default configuration, a full grow will hit the error action side of a def mutation. So this is really just like network, network host. And really, all I want to do here, say, our busiest false show error, I could be a little more detailed and make UI error instead of a Boolean, make it a string. So I could see here there was a serious server error, call support, whatever.
+
+29:25  
+What I'm really interested in is the Okay, action. So this is where
+
+29:29  
+I got a response from the server. And now I need to interpret it, right? So user valid false is an okay response. Right? The network can communication went okay. But I need to determine if the data in the response means they're logged in.
+
+29:46  
+So the mutation finished, I'm going to look at whether or not they're valid. And again, this is much easier to do if the things not normalized in this particular case, because there's no reason trying to figure out which we're waiting
+
+30:00  
+It normalized, in addition to what it says, for a single thing like session, if I'm logged in, fix my flags, and then use the route to function to go home. Now, here's where I'm not saving where they wanted to go, but instead forcing them to a page. Otherwise, show login busy false show login error. True, right? There was a problem, they didn't get logged in. So I'm going to show invalid credentials, which again, I hard coded back in the UI
+
+30:28  
+as as the actual message, but it could really be data here that I could plug in from that layer. So the server could even give me more information that I could potentially show to the user there.
+
+30:42  
+And so then there's the routing. So that's, that's essentially, the, the core of the entire thing. It's not a lot of code. There's a lot of little moving pieces, and there are a lot of little decisions to make.
+
+30:57  
+And the thing that I I didn't like about these sort of things in, you know, years past. And the reason I developed UI state machines, is this stuff does just get spread out in a way where trying to trace through it, even with nice, you know, jump to this jump to that. It's it's it'd be a little nicer if I had things like okay, I'm currently checking credentials, and then these are the things that can happen.
+
+31:25  
+So we'll talk about that in a later video.
+
+Transcribed by https://otter.ai

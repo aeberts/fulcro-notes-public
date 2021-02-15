@@ -1,0 +1,86 @@
+#+TITLE: Fulcro Videos Pt15: Sessions and UI Routing
+
+* Fulcro - Part 15 : Sessions and UI Routing
+https://www.youtube.com/watch?v=oQpmKWBm9HE&t=1s
+
+Code: https://github.com/fulcrologic/video-series/tree/sessions-and-routing
+
+* Introduction
+
+- Working with an app of any size you usually need routing and some kind of user login.
+- This video talks about how to do routing and sessions in Fulcro
+- This video won't go into great depth regarding security - please see other "best practices" to figure out how to do that.
+
+* Goals
+https://youtu.be/oQpmKWBm9HE?t=35
+
+- We'd like to be able to display different screens
+- Be able to log in and log out
+- When we're logged out there are no menus and when we're logged in the menus are enabled
+- If we are logged in and we go to the URL we want it to go to the right place
+- This involves using the HTML5 routing API and HTML routing history.
+- We want to be able to join the HTML5 routing together with the Fulcro routing apis so that all we want to do is tell Fulcro "Render a different screen"
+
+* Setting Up the Pieces
+
+** Server Side Parser
+https://youtu.be/oQpmKWBm9HE?t=102
+
+- The big change is that we'll be using c.f.f.server.api-middleware/handle-api-request directly rather than using Fulcro's convenience function "wrap-api".
+- The reason why we're doing that is so we can modify the parsing environment
+- We have a parallel parser in this example defined in app.server/parser.
+  - Code: https://github.com/fulcrologic/video-series/blob/sessions-and-routing/src/app/server.clj
+  - This is a function of an arbitrary environment that gets passed to your mutations and resolvers and the query you want to process.
+  - So the function "handle-api-request" takes the query you want to process and a function that can process that query and it does the various wrapping and un-wrapping of things to make things happen.
+  - Our goal is to include the ring request in out parser environment so we can see the ring request in our resolvers. This allows us to verify in our resolvers if the user is logged in or not. We'll use "ring session" which places the session information in the ring request.
+  - If we do not have access to the ring request from in our resolvers we won't be able to tell if the user is logged in or not.
+
+** Re-Write the Request for index.html
+https://youtu.be/oQpmKWBm9HE?t=180
+
+- The next important piece is that we need to add a middleware that will re-write the request to ask for index.html if the route is not like a resource.
+- This middleware is called "all-routes-to-index"
+  - (code: https://github.com/fulcrologic/video-series/blob/0eb440dadf608f3ac4a949691bc06c104971eddd/src/app/server.clj#L28)
+- "all-routes-to-index" filters out all the resources that should be handled by the rest of the ring stack (i.e. /api *.css, *.map, *.jpg, *.js etc.)
+- If it is not one of those resources then re-write the request to "/index.html"
+- So if we add a url that does not exist we'll get the index.html page and we can deal with it there logically.
+
+** Changing How the Client Starts
+https://youtu.be/oQpmKWBm9HE?t=240
+
+- Tony starts explaining how he refactored the app but decides to revert the change.
+- shadow-cljs.edn has an :init-fn that calls app.client/start (starts app and initializes things)
+- shadow-cljs.edn has an :after-load function that call app.client/refresh (calls mount to force hot code reload).
+- Since routing is a global concern initialization needed to be separated into an explicit start function or else we'd run into circular references in our clojure file.
+- So the application is all by itself in its own namespace (app.client-app) with just the remote.
+
+** Recap
+https://youtu.be/oQpmKWBm9HE?t=370
+
+- Recap:
+  - We modified the parsing environment to include the ring request.
+  - We made changes to the server, to serve index.html for any url the browser asks the server for.
+  - We setup the app to perform initialization on start and hot code reload on refresh.
+
+** Sessions
+https://youtu.be/oQpmKWBm9HE?t=401
+
+- The next thing we did is to consider how the session should be structured.
+- Have have a session model in clojure (app.model/session.clj)
+- Created a small user database using an atom and added some user data to it
+- Then we defined some resolvers:
+  - user-resolver takes a :user/id and outputs a :user/email (eliding the password)
+  - current-user-resolver uses the ring session middleware to find out if someone is already logged in.
+  - In the server we added wrap-session which auto-sets a cookie on the browser called "ring-session" and then it tracks a map of data against that cookie. You can augment that map over time.
+  - The map is stored on the server and the client is saying "here's who I am with this UUID" and then you can look up on the server what that means. (take a look at the ring-session docs for more details.)
+- current-user-resolver will look in the ring session and store a user there (user-id and an email)
+  - If there's something in the ring-session :session then we return the user id and email else we return "nobody" and :user/valid false.
+- If we now go over to fulcro inspect > EQL panel (aka "Query" in previous versions) and enter the query:
+  - [{:session/current-user [:user/id]}] we should get the info for the currently logged-in user.
+- We have a login mutation where you give an email and password and it tries to look up the user by email and compares the password and if that succeeds, then we use the function "augment-response" from the api-middleware namespace.
+- augment-response takes the response that you want to send back to the client and the function that will (eventually) walk through the ring stack and actually update it.
+- The ring middleware for sessions requires that you stick a session key into the ring request as it goes through probably using update-in but in this case we're assuming the session belongs to "who you are" and nothing else can go in there and so we're just using assoc.
+- So we're putting the subject which is what we found in the user database into the server-side ring map associated with the cookie key that we looked at previously.
+- If that didn't work out then we're just sending back ":user/valid false".
+- Logout mutation:
+  - From the server's perspective, all we need to do is augment some response (the client currently doesn't care what the logout returns) but we want the augment function to change the session to an empty map.
