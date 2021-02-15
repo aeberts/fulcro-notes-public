@@ -24,6 +24,8 @@ Links under section headings jump to the position where Tony is discussing the s
 
 [[fulcro-videos-pt6-full-stack-pt1.org][Fulcro Video 6 : Full Stack Part 1]]
 
+[[fulcro-videos-pt15-sessions-and-routing.org][Fulcro Video 15 : Sessions and UI Routing]]
+
 *** Fulcro RAD
 
 [[building-things-with-rad.org][Building Things with RAD]]
