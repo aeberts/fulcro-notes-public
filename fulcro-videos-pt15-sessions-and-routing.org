@@ -84,3 +84,62 @@ https://youtu.be/oQpmKWBm9HE?t=401
 - If that didn't work out then we're just sending back ":user/valid false".
 - Logout mutation:
   - From the server's perspective, all we need to do is augment some response (the client currently doesn't care what the logout returns) but we want the augment function to change the session to an empty map.
+  - In a production environment we should also re-write or discard the cookie but here we're not going to worry about that for this simple example.
+
+** Dynamic Router
+https://youtu.be/oQpmKWBm9HE?t=663
+
+- The Clojurescript side gets a little hairy. We'll jump to routing first.
+- Fulcro includes a relatively new router - in the dynamic-routing namespace (com.fulcrologic.fulcro.routing.dynamic-routing)
+- dynamic-routing has it's own macro `defrouter`that looks a lot like `defsc`.
+- It works in a very similar way to defsc except that it writes the :query, the :ident and the :initial-state for you.
+- You need to supply `defrouter` with an extra key `:router-targets` and list out the components that the router should show (e.g. show the `LoginForm` or `Home` or `Settings` etc. )
+  - e.g. {:router-targets [LoginForm Home Settings]}
+- The main constraint is that :router-targets must be stateful components with an :ident, :query and :initial-state.
+  - This is because `defrouter` leverages the :query and :ident in app-state and in the query of the main router itself to move things around.
+  - If you don't give it :initial-state, things won't hook up correctly.
+  - Easy mistake to make in Fulcro: If a component has to be there on the first load, it must have :initial-state (initial-state can be an empty map.)
+
+- To use the dynamic-router:
+  - In each of the router targets (which are stateful components) you need to specify a `:route-segment` key.
+  - The route segment key is just a vector of path elements.
+  - E.g. In the case of the login component the `:route-segment` is :route-segment ["login"]
+  - If we have nested :route-segments such as "localhost:300/settings/blah/boo" (video cuts out), we can use the :route-segment ["setting" "blah" "boo"] to specify this URL.
+  - This is not an "automatic" correlation but it is an easy correlation.
+    - What we will have to do is setup our event handler that will see these route changes to split on slashes and then to throw out the first empty thing away and that will be the route segment.
+    - You can read more about this in the docs but basically you can just declaratively say "Main Router": that's my initial slash "/" and then "home" or "settings" is the thing that goes after the slash etc.
+ - To use the router you need to place it in your tree just like any other component:
+      - You make a factory for it
+      - you make a join to the main router
+      - you pull the props out
+      - and then you render it with the factory.
+
+** Routing
+https://youtu.be/oQpmKWBm9HE?t=867
+
+- For routing, there is a change-route function that takes the app and a vector of the entire route that you want the route to go.
+  - E.g. (dr/change-route APP ["settings"]) would take us to the settings route.
+- Note that this doesn't change the URI, it just changes Fulcro's app state.
+- To get routing fully working there are a few more things that we need to do. (We'll focus on the routing part here - we won't cover exactly how login works in its entirety)
+- In a future video we'll cover how UI state machines can handle things like deferred routes.
+
+- First we need to initialize the dynamic router with (dr/initialize! APP) (this is in the app.client/start function) so that it can put all the routers into app state correctly.
+- (routing/start!) function is specific to this app (it's in the app.routing namespace) and this is where we are doing the HTML5 stuff.
+- We're using the library "pushy" which hooks into the HTML5 event system for us and it will send us events.
+- Looking at the `defonce history` in app.routing:
+- pushy/pushy take 2 arguments: a function to make the route "go" and function to recognize the route and split it into pieces and parameters etc.
+  - In this case we supply an anonymous function to make the route go
+  - We're using `identity` here for our path-matcher
+  - What we would get for our supplied path `p` in this case is `/home`
+  - We're going to split on `/` which gives us a sequence of empty string and "home", we throw away the empty string and turn it into a vector.
+  - We "spy" on that thing so we can see it in the console and then we're going to call the change-route! function with that vector that we just created.
+  - That is what we need to do to get routing working with HTML5 support
+
+Recap:
+- We have simple anchor tags (`a`) with :hrefs in the Root component that are changing the URI.
+- When the anchors are clicked, pushy is picking up that HTML5 event and so we now have HTML5 event handling as well (i.e. the forward and back buttons are working).
+
+** Login
+https://youtu.be/oQpmKWBm9HE?t=1063
+
+- There are many features around login and so the next section is intended to show how much complexity is handled behind the scenes by Fulcro.
