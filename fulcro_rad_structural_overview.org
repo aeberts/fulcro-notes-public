@@ -36,8 +36,8 @@ https://youtu.be/H2XY5kdcjGU?t=504
 - c.e.components.ring-middleware.clj wrap-html-routes is the basic webserver router
   + if it doesn't go do /api /images /files or /js then go to index.html
 - Using csrf to generate index.html c.e.c.ring-middleware/index
-- High-level discussion of transit middlware
-- High-level discussion of file upload middlware
+- High-level discussion of transit middleware
+- High-level discussion of file upload middleware
 - Standard Fulcro requests are handled by c.e.c.ring-middleware/wrap-api
 
 ** Config
@@ -196,7 +196,7 @@ https://youtu.be/H2XY5kdcjGU?t=2409
   and validation layers. E.g. data type may be ":string" but the :style says
   it's a :ssn (social security number). Look at the docs to find out what you
   can set as ao/style.
-- {ao/required?} Hint to the plugin laywers if this attribute is required.
+- {ao/required?} Hint to the plugin layers if this attribute is required.
 - {ao/identities #{:account/id}} is the "join point". Identities names all of
   the ":identity true" attributes in data mode on which the entity symbol can
   live. Ex: Let's say you have something that you put on multiple different
@@ -258,7 +258,3 @@ https://youtu.be/H2XY5kdcjGU?t=2998
 - Timezone dropdown (type-ahead find)
 - Calculated fields, validation is supported
 - The URL tracks what is happening in the UI.
-
-
-
-*
