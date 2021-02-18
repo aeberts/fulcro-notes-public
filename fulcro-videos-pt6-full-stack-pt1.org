@@ -4,6 +4,8 @@
 * Fulcro - Part 6 : Full Stack Part One
 https://www.youtube.com/watch?v=F7QzFpo8pA0
 
+Code for this video: https://github.com/fulcrologic/video-series/tree/full-stack-1
+
 ** Modifying Deps to Get Ready for Full Stack
 https://youtu.be/F7QzFpo8pA0?t=20
 
@@ -29,7 +31,43 @@ https://youtu.be/F7QzFpo8pA0?t=386
 https://youtu.be/F7QzFpo8pA0?t=491
 
 - How code reloading works (OS resource management)
+  - the httpkit server gives you a "http/runserver" command, to which you supply the middleware (see previous section "how to build the server" above) and the port you want to run on.
+  - The function to start the server returns a function that allows us to stop the server.
+  - We then place that function ("result") into the "server" atom with reset!
+  - When you listen on a TCP port you must be care not to leave that resource allocated.
+  - We want to make sure that any OS resource is shut down cleanly.
 - Using Mount to manage server components
-- Why fulcro use tools.namespace
-- Setting refresh dirs ("src" "dev") (should not check "resources")
+- Why fulcro uses tools.namespace
+  - This library has the code needed to unload namespaces which is what we need to fully refresh the code in the REPL.
+  - To setup we neet to set refresh dirs to just the dirs that you want tools-ns/refresh to check (e.g. "src" "dev")
+  - Typically, you should not check "resources" which it will by default so you should set-refresh-dirs
+- On calling it, tools-ns/refresh will refresh the namespaces and then will load 'user/start
+- The full quoted symbol is needed here because otherwise it would grab the old version of this symbol
 - No automatic hot code reload on server - trigger when ready.
+
+** Making the Client Talk to the Server
+https://youtu.be/F7QzFpo8pA0?t=762
+
+- We go into our client src.app.client and we find where we defined the app (in this case it's called APP)
+- We add the app/fulcro-app function and a map of remotes (it used to be called ":networking")
+- You name your remotes with a keyword (in this case :remotes)
+  - There's a built-in library (fulcro-http-remote) for talking to http
+  - There's an add-on library for talking to websockets (fulcro-websockets) which can be found in the fulcrologic github (https://github.com/fulcrologic/fulcro-websockets)
+- The fulcro-http-remote defaults to contacting the remote from the same place that the html was loaded from at the /api endpoint.
+- It we look back at the server definition in app.server we told wrap-api to listen on the /api endpoint
+- What we're sending from the client is the full query - it tells the server everything it needs so it only needs one endpoint because this is Pathom / EQL
+- Optional additions to fulcro-http-remote:
+  - Extra middleware, extend transit encoding (e.g. geocoded data)
+- Discussion regarding types that are not natively supported (like big decimal)
+  - Transit knows how to encode big decimal, dates, etc.
+  - Tony's recommendation: If you're going to use, for example, monetary units let the big decimal come across. Javascript and Clojurescript doesn't directly support big decimal (it uses a tagged representation).
+  - Grab a JavaScript library like big.js and create a ClojureScript library that allows you to handle big decimals on both ends.
+  - All you have to do is adapt your UI to transform strings to big decimals.
+  - Try to keep your types the same on both sides.
+  - For dates Tony's recommendation is tick from juxt (https://www.juxt.land/tick/docs/index.html)
+  - Try to avoid converting types on the fly as is commonly done in JavaScript
+
+** Best Practices and Demo etc.
+https://youtu.be/F7QzFpo8pA0?t=1001
+
+- Playing with Fulcro Inspect
