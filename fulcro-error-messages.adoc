@@ -1,0 +1,83 @@
+== Common Fulcro Error Messages
+
+Fulcro is complicated and things need to line up correctly for
+everything to work.
+
+* Is the data in your database?
+* Is the data getting from your db to your root component, form or
+report?
+* Is the data getting from root to your child components?
+
+=== Can't refresh your Fulcro project
+
+fulcro-template and fulcro-RAD-demo contain *.cljc files which contain
+both clj and cljs expressions. It can be tricky to get cljc files to
+refresh correctly using clojure's namespace refresh tools.
+
+One approach is to avoid using cljc files if possible. This is not
+always possible so another approach is to visit the development.clj
+file, load the file in the repl and call the (start) function. This
+bypasses clojure.tools.namepace/refresh and you should be back up and
+running again.
+
+Setting the variable `set-refresh-dirs` is supposed to solve the problem
+but I have done that in fulcro-template/src/dev/user.clj and the problem
+still occurs.
+
+References: https://github.com/stuartsierra/component/issues/45
+
+=== "Cannot Load item in Repl"
+
+Make sure you have the correct repl setup (CLJS or CLJ) and that the
+right repl is the one receving input.
+
+=== Objects are not valid as a React child
+
+This can happen when you pass a parameter to a react component that it
+doesn't know how to render. In many cases this could mean that you're
+passing a clojurescript keyword to a react compoment.
+
+Try removing any symbol that may be a non-renderable object and
+re-render.
+
+Also, you can turn keywords into strings with `name` e.g.:
+
+[source,clojure]
+----
+(name :somekeyword) => ":somekeyword"
+----
+
+=== No such var: … macro-create-element*
+
+This can be due to a cljc file that has does not use #?(clj: ) to
+separate the namespaces "dom" and "dom.server".
+
+To fix, add the following to the namespace that is producing the error:
+
+[source,clojure]
+----
+#?(:clj  [com.fulcrologic.fulcro.dom-server :as dom :refer [div p a]]
+   :cljs [com.fulcrologic.fulcro.dom :as dom :refer [div p a]])
+----
+
+=== When defining a mutation "no source by provide: app.ui.root"
+
+Calling a mutation directly? Do you have to use `transact!`?
+
+=== Shadow-cljs fails to load after change (Missing Root query)
+
+This could be caused by many things but the issue that I run into is not
+specifying a query for root when other components in the chain have
+queries defined. This will prevent shadow-cljs from compiling and it
+will send the browser into an infinite loop.
+
+Update: Fulcro-3.4.19 should warn you about this case
+
+=== Recommended steps for building a fulcro app
+
+==== If the data is already in an established DB
+
+* Create the resolvers and make sure that your resolvers return your
+data in the correct shape (or format).
+* Create simple reports first with resolvers that you know are working.
+Once you have the base working, start enhancing the resolvers and ui.
